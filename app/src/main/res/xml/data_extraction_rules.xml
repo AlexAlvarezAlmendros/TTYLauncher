@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31+).
+
+  El scrollback es un registro en disco de lo que el usuario hace con su teléfono. Vive en
+  noBackupFilesDir, que ya queda excluido automáticamente de ambos modos, pero la exclusión se
+  declara igualmente: android:allowBackup="false" por sí solo NO desactiva la transferencia
+  dispositivo-a-dispositivo en los móviles de algunos fabricantes.
+
+  Exclusión total con <exclude>, sin ningún <include>: declarar un <include> elimina el
+  comportamiento por defecto y pasaría a respaldarse SOLO lo incluido.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+    </device-transfer>
+</data-extraction-rules>

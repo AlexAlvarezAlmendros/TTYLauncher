@@ -1,0 +1,47 @@
+####################################################################################################
+# tty — catálogo de versiones
+#
+# Este es el ÚNICO sitio donde viven los números de versión. No hardcodear versiones en los
+# build.gradle.kts.
+#
+# Verificado documentalmente el 2026-07-26 contra developer.android.com, kotlinlang.org y
+# gradle.org — pero NO compilado: la máquina de desarrollo no tiene JDK/SDK todavía.
+# Si la sincronización falla, corrige aquí y anota el cambio en docs/architecture.md §9.
+####################################################################################################
+
+[versions]
+# AGP 9.3.1 exige Gradle >= 9.5.0, JDK 17, Build Tools 36.0.0 y soporta compileSdk <= 37
+agp = "9.3.1"
+# El POM de com.android.tools.build:gradle:9.3.1 declara kotlin-gradle-plugin 2.2.10: ESA es la
+# versión que compila, porque el proyecto no sobreescribe el Kotlin integrado de AGP 9. El plugin
+# del compilador de Compose usa esta misma referencia y DEBE coincidir con ella — aplicar un
+# plugin de Compose 2.3.x sobre un compilador 2.2.10 es exactamente el desajuste que hay que
+# evitar. Subir de verdad a 2.3.x exigiría meter KGP en el classpath del buildscript; no se hace.
+kotlin = "2.2.10"
+composeBom = "2026.06.01"
+activityCompose = "1.13.0"
+coreKtx = "1.17.0"
+junit = "4.13.2"
+
+compileSdk = "37"
+targetSdk = "36"
+minSdk = "26"
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+# Único plugin de Kotlin que se sigue aplicando a mano: AGP 9 trae el resto integrado.
+# Su versión debe ser SIEMPRE idéntica a la de Kotlin.
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+[libraries]
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+# NOTA: no hay material3, ni Hilt, ni Room, ni DataStore, ni librerías de terceros.
+# Añadir una dependencia es una decisión de producto. Ver CLAUDE.md.

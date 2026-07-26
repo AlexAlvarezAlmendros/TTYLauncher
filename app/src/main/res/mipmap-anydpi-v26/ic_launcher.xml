@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  minSdk es 26, así que este adaptive icon cubre todos los dispositivos y no hacen falta PNG.
+  Sin iconografía figurativa (§4.8): un punto de la matriz sobre tinta. Es el glifo READY.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ink" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>
