@@ -59,16 +59,20 @@ Excepción: ediciones de solo documentación/planificación pueden ir directas a
 
 ## Estado del repositorio
 
-Repo **greenfield**: hay documentación y el andamiaje de Gradle, y **nada compilado todavía**.
+La Fase 0 está implementada, **compila y sus 107 tests pasan**. El toolchain está instalado en esta
+máquina bajo `$HOME` (sin `sudo`) y exportado en `~/.zshrc`:
 
-> ⚠️ Esta máquina no tiene JDK, Gradle ni Android SDK (`java`, `gradle` y `adb` no están en el
-> `PATH`). **El wrapper está incompleto**: solo existe `gradle/wrapper/gradle-wrapper.properties`;
-> faltan `gradlew`, `gradlew.bat` y `gradle-wrapper.jar`, que son binarios/scripts que hay que
-> generar con un Gradle real. Hasta entonces `./gradlew` no existe y **ningún comando de la sección
-> siguiente se puede ejecutar**.
->
-> Hasta que la tarea 0.0 esté hecha, **todo el código del repo es no verificado**: no afirmes que
-> algo compila o pasa los tests sin haberlo ejecutado.
+```
+JAVA_HOME      ~/.local/opt/jdk17          Temurin 17.0.20
+ANDROID_HOME   ~/Android/Sdk               platform-tools · platforms;android-37.0 · build-tools;37.0.0
+Gradle          por wrapper (9.6.1)        ~/.local/opt/gradle-9.6.1 solo se usó para generarlo
+```
+
+`local.properties` (con `sdk.dir`) es local de la máquina y está en `.gitignore`: no se versiona.
+
+> Lo que sigue **sin verificar** es todo lo que necesita una pantalla: que el teclado salga solo,
+> que el prompt no se mueva, que el catálogo se refresque al instalar una app. No hay ningún
+> dispositivo conectado por `adb`. No afirmes que algo funciona en el móvil sin haberlo visto.
 
 ```
 app/src/main/kotlin/dev/tty/
@@ -108,19 +112,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ./gradlew clean
 ```
 
-**Generar el wrapper (una sola vez, y todavía pendiente).** No se puede con
-`gradle wrapper` porque no hay ningún `gradle` en la máquina. Las dos rutas que sí funcionan:
-
-```bash
-# a) Abrir el proyecto en Android Studio: trae su propia distribución y lo genera solo.
-
-# b) A mano, sin instalar nada permanente:
-curl -L -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-9.6.1-bin.zip
-unzip -q /tmp/gradle.zip -d /tmp
-/tmp/gradle-9.6.1/bin/gradle wrapper --gradle-version 9.6.1
-```
-
-Deja `gradlew`, `gradlew.bat` y `gradle/wrapper/gradle-wrapper.jar`. **Los tres se commitean.**
+El wrapper ya está generado y versionado (`gradlew`, `gradlew.bat` y `gradle-wrapper.jar`).
 
 ---
 
@@ -132,17 +124,18 @@ Viven **solo** en `gradle/libs.versions.toml`. No hardcodear versiones en ningú
 AGP            9.3.1     (exige Gradle >= 9.5.0, JDK 17, Build Tools 36.0.0)
 Gradle         9.6.1
 JDK            17
-Kotlin (KGP)   2.2.10    la que declara el POM de AGP 9.3.1 — es la que compila de verdad
+Kotlin (KGP)   2.2.10    la que declara el POM de AGP 9.3.1 — confirmada compilando
 Compose plugin = Kotlin  org.jetbrains.kotlin.plugin.compose — DEBE coincidir con Kotlin
 Compose BOM    2026.06.01
 activity-compose 1.13.0
-compileSdk     37
+compileSdk     37        → platforms;android-37.0
 targetSdk      36
 minSdk         26
+Build Tools    37.0.0    (36.0.0 también existe; AGP resuelve la que necesita)
 ```
 
-**Verificado documentalmente el 26/07/2026, sin compilar.** Si la sincronización falla, se corrige
-el catálogo y se anota en `docs/architecture.md §9`.
+**Verificado compilando el 26/07/2026**: `assembleDebug` y `test` en verde con esta combinación
+exacta. Si algo cambia, se corrige el catálogo y se anota en `docs/architecture.md §9`.
 
 **AGP 9 trae Kotlin integrado:** no se aplica `org.jetbrains.kotlin.android` en ningún sitio, y se
 usa `kotlin { compilerOptions { } }`, no `kotlinOptions{}`. `buildConfig` y `resValues` vienen

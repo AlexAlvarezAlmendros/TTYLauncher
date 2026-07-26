@@ -249,9 +249,9 @@ class TerminalEngineTest {
         val h = harness()
         val added = h.submit("flood")
 
-        // eco + límite + la línea que dice cuánto se recortó
-        assertEquals(1 + Limits.COMMAND_OUTPUT_LINES + 1, added.size)
-        assertEquals("… 40 more lines", added.last().text)
+        // eco + el cupo entero, con la línea de aviso ya contada dentro
+        assertEquals(1 + Limits.COMMAND_OUTPUT_LINES, added.size)
+        assertEquals("… 41 more lines", added.last().text)
         assertEquals(Role.STATUS, added.last().role)
     }
 

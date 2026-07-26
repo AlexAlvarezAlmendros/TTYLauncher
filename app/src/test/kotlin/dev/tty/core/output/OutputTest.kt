@@ -42,9 +42,10 @@ class OutputTest {
         val sobran = 100
         val t = deLineas(Limits.COMMAND_OUTPUT_LINES + sobran).truncated()
 
-        // El límite de líneas, más la línea que cuenta lo que se ha quitado.
-        assertEquals(Limits.COMMAND_OUTPUT_LINES + 1, t.lines.size)
-        assertEquals("… $sobran more lines", t.lines.last().first)
+        // El aviso ocupa una de las líneas del cupo: el total es EXACTAMENTE el límite, nunca uno
+        // más. Un límite que se pasa por uno no es un límite.
+        assertEquals(Limits.COMMAND_OUTPUT_LINES, t.lines.size)
+        assertEquals("… ${sobran + 1} more lines", t.lines.last().first)
         assertEquals(Role.STATUS, t.lines.last().second)
     }
 
@@ -53,26 +54,31 @@ class OutputTest {
         val t = deLineas(Limits.COMMAND_OUTPUT_LINES + 7).truncated()
 
         assertEquals("line 0", t.lines.first().first)
-        assertEquals("line ${Limits.COMMAND_OUTPUT_LINES - 1}", t.lines[Limits.COMMAND_OUTPUT_LINES - 1].first)
-        assertEquals("… 7 more lines", t.lines[Limits.COMMAND_OUTPUT_LINES].first)
+        assertEquals("line ${Limits.COMMAND_OUTPUT_LINES - 2}", t.lines[Limits.COMMAND_OUTPUT_LINES - 2].first)
+        assertEquals("… 8 more lines", t.lines[Limits.COMMAND_OUTPUT_LINES - 1].first)
     }
 
     @Test
-    fun `una sola linea de mas ya se anuncia`() {
+    fun `una sola linea de mas ya se anuncia, en singular`() {
+        // Sobra una respecto al cupo, pero el aviso también ocupa sitio: se van dos.
         val t = deLineas(Limits.COMMAND_OUTPUT_LINES + 1).truncated()
-        assertEquals("… 1 more lines", t.lines.last().first)
+        assertEquals("… 2 more lines", t.lines.last().first)
+
+        // Y el singular se escribe en singular: "1 more lines" es de robot.
+        val justa = deLineas(Limits.COMMAND_OUTPUT_LINES).truncated()
+        assertEquals(Limits.COMMAND_OUTPUT_LINES, justa.lines.size)
     }
 
     @Test
-    fun `recortar dos veces no acumula avisos`() {
-        // La línea de estado deja la salida justo uno por encima del límite, así que una segunda
-        // pasada vuelve a recortar. Lo que se protege es que quede UNA sola línea de aviso: dos
-        // avisos seguidos serían ruido, y contarían mal.
+    fun `recortar es idempotente`() {
+        // Como el aviso entra dentro del cupo, el resultado mide justo el límite y una segunda
+        // pasada no toca nada: ni recorta otra vez, ni falsea la cuenta con un "… 1 more lines"
+        // que se comería la cifra real.
         val una = deLineas(Limits.COMMAND_OUTPUT_LINES + 5).truncated()
         val dos = una.truncated()
 
-        assertEquals(Limits.COMMAND_OUTPUT_LINES + 1, dos.lines.size)
-        assertEquals("… 1 more lines", dos.lines.last().first)
+        assertEquals(una.lines, dos.lines)
+        assertEquals("… 6 more lines", dos.lines.last().first)
         assertEquals(1, dos.lines.count { it.second == Role.STATUS })
     }
 
