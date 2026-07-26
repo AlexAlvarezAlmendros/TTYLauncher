@@ -105,12 +105,22 @@ private class FakeScripts(private val items: MutableMap<String, dev.tty.core.scr
     override suspend fun seedExamples() = Unit
 }
 
+
+/** Termux ausente: es el estado por defecto de un móvil, y el que más hay que probar. */
+private class FakeTermuxClient(private val error: dev.tty.core.termux.TermuxError? = null) :
+    dev.tty.core.termux.TermuxClient {
+    override suspend fun check() = error
+    override suspend fun run(path: String, args: List<String>) =
+        Result.success(dev.tty.core.termux.TermuxResult(emptyList(), emptyList(), 0))
+}
+
 private class FakeContext(
     override val catalog: AppCatalog = FakeCatalog(),
     override val actions: AppActions = FakeActions(),
     override val killer: AppKiller = FakeKiller(),
     override val files: dev.tty.core.command.builtin.FileSystemAccess = FakeFiles(),
     override val scripts: dev.tty.core.script.ScriptStore = FakeScripts(),
+    override val termux: dev.tty.core.termux.TermuxClient = FakeTermuxClient(),
     override val session: Session = FakeSession(),
     override val device: DeviceInfo = FakeDevice,
     override val commands: List<Command> = emptyList(),

@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import dev.tty.platform.AppContainer
@@ -44,11 +45,26 @@ class MainActivity : ComponentActivity() {
      */
     private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    /**
+     * El permiso de Termux (`com.termux.permission.RUN_COMMAND`).
+     *
+     * Lo define **otra app** con `protectionLevel="dangerous"`, así que solo es concedible si Termux
+     * ya está instalado, y desinstalarlo y reinstalarlo pierde la concesión. No se pide al arrancar:
+     * se pide la primera vez que `sh` o `tmux` se topan con él, que es cuando el usuario entiende
+     * para qué sirve.
+     */
+    private val termuxPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { /* el resultado se ve al reintentar el comando; no se imprime nada */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         container = AppContainer(this)
+        container.termuxPermissionRequester = {
+            runCatching { termuxPermission.launch("com.termux.permission.RUN_COMMAND") }
+        }
         state = TerminalState(
             // Lambda y no `container::submit`: los tipos función de Kotlin no son covariantes en el
             // retorno, así que una `(String) -> List<Line>` no encaja donde se espera

@@ -34,16 +34,20 @@ import dev.tty.core.command.builtin.InfoCommand
 import dev.tty.core.command.builtin.KillCommand
 import dev.tty.core.command.builtin.OpenCommand
 import dev.tty.core.command.builtin.ScriptCommand
+import dev.tty.core.command.builtin.ShCommand
 import dev.tty.core.command.builtin.SettingsCommand
+import dev.tty.core.command.builtin.TmuxCommand
 import dev.tty.core.command.builtin.UninstallCommand
 import dev.tty.core.output.Line
 import dev.tty.core.output.Role
 import dev.tty.core.scrollback.Scrollback
 import dev.tty.core.script.ScriptRunner
 import dev.tty.core.script.ScriptStore
+import dev.tty.core.termux.TermuxClient
 import dev.tty.platform.apps.LauncherAppsCatalog
 import dev.tty.platform.apps.SystemDialogKiller
 import dev.tty.platform.fs.AndroidStorage
+import dev.tty.platform.termux.TermuxRunCommand
 import dev.tty.platform.store.FileScriptStore
 import dev.tty.platform.store.ScrollbackStore
 import kotlinx.coroutines.CoroutineScope
@@ -104,6 +108,12 @@ class AppContainer(context: Context) {
 
     private val scriptRunner = ScriptRunner(scriptStore)
 
+    /**
+     * La única escotilla del vocabulario, y explícita. Es el punto de mayor riesgo del proyecto:
+     * la API de RUN_COMMAND no es estable (architecture.md §7).
+     */
+    private val termuxClient = TermuxRunCommand(appContext)
+
     /** Los números del banner (functional.md §11). */
     val device: DeviceInfo = DeviceInfoImpl(launcherApps, scrollback)
 
@@ -156,6 +166,9 @@ class AppContainer(context: Context) {
             MountCommand,
             // Fase 3
             ScriptCommand,
+            // Fase 4
+            ShCommand,
+            TmuxCommand,
         ),
     )
 
@@ -165,6 +178,7 @@ class AppContainer(context: Context) {
         override val killer: AppKiller = this@AppContainer.killer
         override val files: FileSystemAccess = storage
         override val scripts: ScriptStore = scriptStore
+        override val termux: TermuxClient = termuxClient
         override fun isReservedName(name: String): Boolean = registry.isReserved(name)
         // El motor se declara después: aquí solo se referencia, y esto se invoca en tiempo de
         // ejecución, no al construir. El tipo de `engine` va anotado explícitamente porque si no
@@ -191,6 +205,14 @@ class AppContainer(context: Context) {
      * Se devuelve una copia y no la lista viva del scrollback: quien la reciba no debe verla cambiar
      * bajo los pies.
      */
+    /**
+     * Cómo pedir el permiso de Termux. Lo cablea la actividad: un permiso en runtime exige una
+     * Activity, y aquí solo hay contexto de aplicación.
+     */
+    var termuxPermissionRequester: (() -> Unit)?
+        get() = termuxClient.permissionRequester
+        set(value) { termuxClient.permissionRequester = value }
+
     /** `…` mientras se graba un script, `>` el resto del tiempo (functional.md §8.2). */
     val promptSymbol: String get() = engine.promptSymbol
 
@@ -246,6 +268,7 @@ class AppContainer(context: Context) {
      */
     fun onStart() {
         launcherApps.register()
+        termuxClient.register()
         scope.launch { launcherApps.refresh() }
     }
 
@@ -258,12 +281,14 @@ class AppContainer(context: Context) {
      */
     fun onStop() {
         launcherApps.unregister()
+        termuxClient.unregister()
         scope.launch { store.sync() }
     }
 
     /** Cierre definitivo. Después de esto el contenedor no sirve: se construye otro. */
     fun close() {
         launcherApps.unregister()
+        termuxClient.unregister()
         scope.cancel()
     }
 

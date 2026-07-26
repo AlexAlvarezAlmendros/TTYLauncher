@@ -11,7 +11,12 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
-        <!-- Fase 4 — Termux: <package android:name="com.termux" /> -->
+        <!--
+          Fase 4 — Termux. Sin esto, getPackageInfo lanza NameNotFoundException aunque Termux esté
+          instalado: se confundiría «no instalado» con «no visible», que es justo el error que la
+          §9.4 del funcional prohíbe.
+        -->
+        <package android:name="com.termux" />
     </queries>
 
     <!-- Fase 1: abre el diálogo de desinstalación del sistema. No desinstala nada por su cuenta. -->
@@ -26,9 +31,12 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <!--
-      KILL_BACKGROUND_PROCESSES NO se declara: desde Android 14 no sirve para nada.
-      Fase 4 — <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
+      Fase 4: lo define Termux con protectionLevel="dangerous", así que se pide en runtime y solo
+      es concedible si Termux ya está instalado. Desinstalar y reinstalar Termux pierde la concesión.
     -->
+    <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
+
+    <!-- KILL_BACKGROUND_PROCESSES NO se declara: desde Android 14 no sirve para nada. -->
 
     <application
         android:allowBackup="false"
