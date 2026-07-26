@@ -24,8 +24,6 @@ La diferencia con un launcher minimalista de lista es que aquí la interacción 
 no una selección. La diferencia con una terminal de verdad es que el vocabulario es cerrado y
 auditable, salvo una única puerta explícita hacia Termux.
 
-El producto se considera terminado cuando el autor lo usa como launcher por defecto durante dos
-semanas sin volver al anterior.
 
 ---
 
