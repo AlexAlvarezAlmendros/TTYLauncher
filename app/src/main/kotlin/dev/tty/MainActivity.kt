@@ -65,6 +65,9 @@ class MainActivity : ComponentActivity() {
         startupScope.launch {
             container.restore()
             state.refresh()
+            // El permiso de ficheros va después del banner, no antes: primero se ve qué es esto.
+            container.requestStorageAccessOnFirstRun()
+            state.refresh()
         }
     }
 

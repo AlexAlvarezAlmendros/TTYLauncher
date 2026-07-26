@@ -52,6 +52,9 @@ interface CommandContext {
      * diálogo del sistema, y el día que haya un backend con privilegios el comando no cambia.
      */
     val killer: AppKiller
+
+    /** La jaula de rutas y el permiso de almacenamiento. Ver `FileSystemAccess`. */
+    val files: dev.tty.core.command.builtin.FileSystemAccess
     val session: Session
     val device: DeviceInfo
 
