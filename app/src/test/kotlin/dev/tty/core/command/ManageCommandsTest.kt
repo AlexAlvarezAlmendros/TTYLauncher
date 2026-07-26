@@ -59,6 +59,11 @@ class ManageCommandsTest {
         override val actions: AppActions,
         override val killer: AppKiller,
     ) : CommandContext {
+        override val files = object : dev.tty.core.command.builtin.FileSystemAccess {
+            override val cage = dev.tty.core.fs.Cage(java.nio.file.Files.createTempDirectory("tty-manage"))
+            override fun hasStorageAccess() = true
+            override fun requestStorageAccess() = true
+        }
         override val session = object : Session {
             override suspend fun clearScrollback() = Unit
         }

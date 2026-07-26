@@ -12,6 +12,22 @@ import dev.tty.core.command.DeviceInfo
 import dev.tty.core.command.Session
 import dev.tty.core.apps.AppKiller
 import dev.tty.core.command.builtin.AppsCommand
+import dev.tty.core.command.builtin.CatCommand
+import dev.tty.core.command.builtin.CdCommand
+import dev.tty.core.command.builtin.CpCommand
+import dev.tty.core.command.builtin.DfCommand
+import dev.tty.core.command.builtin.DuCommand
+import dev.tty.core.command.builtin.FileSystemAccess
+import dev.tty.core.command.builtin.FindCommand
+import dev.tty.core.command.builtin.HeadCommand
+import dev.tty.core.command.builtin.LsCommand
+import dev.tty.core.command.builtin.MkdirCommand
+import dev.tty.core.command.builtin.MountCommand
+import dev.tty.core.command.builtin.MvCommand
+import dev.tty.core.command.builtin.PwdCommand
+import dev.tty.core.command.builtin.RmCommand
+import dev.tty.core.command.builtin.TailCommand
+import dev.tty.core.command.builtin.TouchCommand
 import dev.tty.core.command.builtin.ClearCommand
 import dev.tty.core.command.builtin.HelpCommand
 import dev.tty.core.command.builtin.InfoCommand
@@ -20,9 +36,11 @@ import dev.tty.core.command.builtin.OpenCommand
 import dev.tty.core.command.builtin.SettingsCommand
 import dev.tty.core.command.builtin.UninstallCommand
 import dev.tty.core.output.Line
+import dev.tty.core.output.Role
 import dev.tty.core.scrollback.Scrollback
 import dev.tty.platform.apps.LauncherAppsCatalog
 import dev.tty.platform.apps.SystemDialogKiller
+import dev.tty.platform.fs.AndroidStorage
 import dev.tty.platform.store.ScrollbackStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,6 +86,12 @@ class AppContainer(context: Context) {
      */
     private val killer: AppKiller = SystemDialogKiller(launcherApps)
 
+    /**
+     * La jaula de rutas y el permiso de almacenamiento. Es lo único de los quince verbos de fichero
+     * que es de Android: el resto vive en `core/` con `java.nio` y se testea sin emulador.
+     */
+    private val storage: FileSystemAccess = AndroidStorage(appContext)
+
     /** Los números del banner (functional.md §11). */
     val device: DeviceInfo = DeviceInfoImpl(launcherApps, scrollback)
 
@@ -102,6 +126,22 @@ class AppContainer(context: Context) {
             UninstallCommand,
             InfoCommand,
             SettingsCommand,
+            // Fase 2 — ficheros
+            PwdCommand,
+            CdCommand,
+            LsCommand,
+            CatCommand,
+            HeadCommand,
+            TailCommand,
+            MkdirCommand,
+            TouchCommand,
+            RmCommand,
+            MvCommand,
+            CpCommand,
+            DfCommand,
+            DuCommand,
+            FindCommand,
+            MountCommand,
         ),
     )
 
@@ -109,6 +149,7 @@ class AppContainer(context: Context) {
         override val catalog: AppCatalog = launcherApps
         override val actions: AppActions = launcherApps
         override val killer: AppKiller = this@AppContainer.killer
+        override val files: FileSystemAccess = storage
         override val session: Session = this@AppContainer.session
         override val device: DeviceInfo = this@AppContainer.device
         override val commands: List<Command> get() = registry.all
@@ -142,8 +183,33 @@ class AppContainer(context: Context) {
             launcherApps.refresh()
             val banner = Banner.render(device).lines.map { (text, role) -> scrollback.add(text, role) }
             store.append(banner)
+            firstRun = true
         }
         return scrollback.lines.toList()
+    }
+
+    @Volatile
+    private var firstRun = false
+
+    /**
+     * El permiso de almacenamiento, en la primera ejecución y solo entonces (functional.md §11.4).
+     *
+     * Es la **única** concesión del producto a un onboarding, y está aceptada como tal: sin ella la
+     * mitad del vocabulario no funciona. Si el usuario dice que no, `mount` la recupera y nada más
+     * se rompe — los comandos de app siguen funcionando igual.
+     */
+    suspend fun requestStorageAccessOnFirstRun(): List<Line> {
+        if (!firstRun) return emptyList()
+        firstRun = false
+        if (storage.hasStorageAccess()) return emptyList()
+
+        val added = listOf(
+            scrollback.add("file commands need access to storage", Role.STATUS),
+            scrollback.add("opening all-files access in settings — or run 'mount' later", Role.STATUS),
+        )
+        store.append(added)
+        storage.requestStorageAccess()
+        return added
     }
 
     /**

@@ -82,10 +82,23 @@ private object FakeDevice : DeviceInfo {
     override fun scrollbackLines() = 0
 }
 
+
+/** La jaula sobre un directorio temporal: los tests de comandos no tocan el disco de verdad. */
+private class FakeFiles(
+    root: java.nio.file.Path = java.nio.file.Files.createTempDirectory("tty-fake"),
+    private val granted: Boolean = true,
+) : dev.tty.core.command.builtin.FileSystemAccess {
+    override val cage = dev.tty.core.fs.Cage(root)
+    var requests = 0
+    override fun hasStorageAccess() = granted
+    override fun requestStorageAccess(): Boolean { requests++; return true }
+}
+
 private class FakeContext(
     override val catalog: AppCatalog = FakeCatalog(),
     override val actions: AppActions = FakeActions(),
     override val killer: AppKiller = FakeKiller(),
+    override val files: dev.tty.core.command.builtin.FileSystemAccess = FakeFiles(),
     override val session: Session = FakeSession(),
     override val device: DeviceInfo = FakeDevice,
     override val commands: List<Command> = emptyList(),
