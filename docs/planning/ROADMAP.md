@@ -26,7 +26,7 @@ Dos consecuencias que hay que respetar:
 | # | Fase | Estado | Plan | Hito |
 |---|------|--------|------|------|
 | 0 | Sustituye a tu launcher | 🔄 En curso | [00-launcher-base.md](plans/00-launcher-base.md) | El móvil arranca en `tty` y se abre cualquier app escribiendo 3–4 letras |
-| 1 | Gestión de apps | 🔒 Bloqueado | [01-gestion-apps.md](plans/01-gestion-apps.md) | `kill`, `uninstall` e `info` funcionan y ningún comando destructivo adivina ante ambigüedad |
+| 1 | Gestión de apps | 🔄 En curso | [01-gestion-apps.md](plans/01-gestion-apps.md) | `kill`, `uninstall` e `info` funcionan y ningún comando destructivo adivina ante ambigüedad |
 | 2 | Ficheros | 🔒 Bloqueado | [02-ficheros.md](plans/02-ficheros.md) | `cd Download` y `ls` devuelven lo que hay en el teléfono, y nada puede tocar fuera de la raíz |
 | 3 | Scripts | 🔒 Bloqueado | [03-scripts.md](plans/03-scripts.md) | `focus obsidian` ejecuta tres comandos con argumento posicional |
 | 4 | Termux | 🔒 Bloqueado | [04-termux.md](plans/04-termux.md) | `tmux build -k "…"` devuelve la foto del pane con la tipografía de `tty` |
@@ -35,18 +35,19 @@ Dos consecuencias que hay que respetar:
 
 ## Foco actual
 
-**Fase 0 — Sustituye a tu launcher.** La fase está **escrita entera**: motor de comandos, catálogo
-de apps, scrollback persistente, los cuatro verbos y la UI de Compose, más 107 tests JVM. Pero
-**no se ha compilado ni ejecutado una sola línea**.
+**Fases 0 y 1, escritas y en verde.** El toolchain está instalado (JDK 17, SDK con android-37.0,
+wrapper de Gradle 9.6.1): `./gradlew assembleDebug` produce un APK y `./gradlew test` pasa **129
+tests sin fallos**. El motor de comandos, el catálogo de apps, el scrollback persistente, la UI de
+Compose y los ocho verbos (`help` `apps` `open` `clear` `kill` `uninstall` `info` `settings`) están
+implementados.
 
-El siguiente paso no es escribir más código: es cerrar la **0.0** —instalar JDK 17 y el Android SDK,
-y generar el wrapper— y después la **0.1**, que el proyecto sincronice de verdad. Hasta entonces
-todas las tareas están en `🔄 En curso` y ninguna en `✅ Hecho`, porque no se ha verificado nada.
+**El bloqueo ya no es el entorno: es el dispositivo.** Nada se ha ejecutado nunca en un móvil, y
+todo lo que queda por cerrar de las dos fases lo necesita — que el teclado salga solo (criterio 2),
+que el prompt no se mueva (criterio 11), que los diálogos del sistema se abran de verdad, y si
+Gboard sigue sugiriendo pese a `KeyboardType.Ascii`. **Compilar no es verlo funcionar.**
 
-**Bloqueo de entorno:** esta máquina no tiene JDK, Gradle ni Android SDK instalados
-(`java`, `gradle` y `adb` no existen en el `PATH`). Nada del andamiaje se ha compilado nunca. La
-tarea 0.0 es instalar el toolchain y verificar que `./gradlew assembleDebug` pasa; hasta entonces
-todo el código escrito es **no verificado**.
+Siguiente paso: conectar un móvil, `./gradlew installDebug`, fijarlo como launcher por defecto y
+vivir con él unos días. Esa es la puerta que abre la Fase 2.
 
 ## El problema de `kill` — cerrado
 

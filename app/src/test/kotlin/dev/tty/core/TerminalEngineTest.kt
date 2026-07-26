@@ -2,6 +2,8 @@ package dev.tty.core
 
 import dev.tty.core.apps.AppActions
 import dev.tty.core.apps.AppCatalog
+import dev.tty.core.apps.AppKiller
+import dev.tty.core.apps.KillMode
 import dev.tty.core.apps.AppEntry
 import dev.tty.core.command.Command
 import dev.tty.core.command.CommandContext
@@ -30,8 +32,38 @@ private class FakeCatalog(private val apps: List<AppEntry> = emptyList()) : AppC
 
 private class FakeActions(private val result: Boolean = true) : AppActions {
     var opened: AppEntry? = null
+    var uninstalled: AppEntry? = null
+    var settingsFor: AppEntry? = null
+    var systemSettings = 0
+
     override fun open(app: AppEntry): Boolean {
         opened = app
+        return result
+    }
+
+    override fun requestUninstall(app: AppEntry): Boolean {
+        uninstalled = app
+        return result
+    }
+
+    override fun openAppSettings(app: AppEntry): Boolean {
+        settingsFor = app
+        return result
+    }
+
+    override fun openSystemSettings(): Boolean {
+        systemSettings++
+        return result
+    }
+}
+
+private class FakeKiller(
+    override val mode: KillMode = KillMode.SYSTEM_DIALOG,
+    private val result: Boolean = true,
+) : AppKiller {
+    var stopped: AppEntry? = null
+    override fun requestStop(app: AppEntry): Boolean {
+        stopped = app
         return result
     }
 }
@@ -53,6 +85,7 @@ private object FakeDevice : DeviceInfo {
 private class FakeContext(
     override val catalog: AppCatalog = FakeCatalog(),
     override val actions: AppActions = FakeActions(),
+    override val killer: AppKiller = FakeKiller(),
     override val session: Session = FakeSession(),
     override val device: DeviceInfo = FakeDevice,
     override val commands: List<Command> = emptyList(),

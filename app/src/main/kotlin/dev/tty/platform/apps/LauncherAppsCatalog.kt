@@ -2,6 +2,9 @@ package dev.tty.platform.apps
 
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
@@ -11,6 +14,8 @@ import android.os.UserHandle
 import dev.tty.core.apps.AppActions
 import dev.tty.core.apps.AppCatalog
 import dev.tty.core.apps.AppEntry
+import dev.tty.core.apps.AppKiller
+import dev.tty.core.apps.KillMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -246,4 +251,76 @@ class LauncherAppsCatalog(
             false
         }
     }
+
+    // --- Fase 1: los efectos que pasan por un diálogo del sistema -----------------------------
+
+    /**
+     * `uninstall`. No existe la desinstalación silenciosa sin ser device owner: el diálogo del
+     * sistema **es** el límite aceptado de la §12, no una carencia de la implementación.
+     *
+     * `ACTION_DELETE` en vez de `PackageInstaller.uninstall`: no devuelve resultado, pero tampoco
+     * hace falta —el fin de la desinstalación se detecta por `LauncherApps.Callback.onPackageRemoved`,
+     * que además ya refresca el catálogo—. `ACTION_UNINSTALL_PACKAGE` está deprecado desde API 29.
+     */
+    override fun requestUninstall(app: AppEntry): Boolean =
+        launch(
+            Intent(Intent.ACTION_DELETE, Uri.fromParts("package", app.packageName, null)),
+        )
+
+    /**
+     * `info -o` y `kill`. Multiperfil de verdad sería `startAppDetailsActivity`, pero eso exige el
+     * `LauncherActivityInfo` vivo; aquí basta el intent, que funciona igual para el perfil
+     * principal — el único que el catálogo expone hoy.
+     */
+    override fun openAppSettings(app: AppEntry): Boolean =
+        launch(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", app.packageName, null),
+            ),
+        )
+
+    /**
+     * `settings`. `ACTION_HOME_SETTINGS` primero porque lleva directo a la pantalla que importa
+     * —elegir launcher—, que es la razón de existir del comando: sin él no hay forma de volver al
+     * launcher anterior. Si el fabricante no la resuelve, se cae a la lista de apps por defecto y,
+     * en último término, a los ajustes generales.
+     */
+    override fun openSystemSettings(): Boolean =
+        launch(Intent(Settings.ACTION_HOME_SETTINGS)) ||
+            launch(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) ||
+            launch(Intent(Settings.ACTION_SETTINGS))
+
+    /**
+     * Lanza un intent del sistema. `FLAG_ACTIVITY_NEW_TASK` es obligatorio: el contexto es el de
+     * aplicación, y además el launcher declara `taskAffinity=""`.
+     *
+     * Devuelve `false` en lugar de propagar. Una excepción aquí crashea la actividad HOME, que es
+     * funcionalmente un móvil bloqueado (§16).
+     */
+    private fun launch(intent: Intent): Boolean = try {
+        appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
+    } catch (e: SecurityException) {
+        false
+    } catch (e: RuntimeException) {
+        false
+    }
+}
+
+/**
+ * La única implementación de `AppKiller` que la plataforma permite hoy.
+ *
+ * `ActivityManager.killBackgroundProcesses()` dejó de afectar a otras apps en Android 14 y **falla
+ * en silencio**, así que lo honesto es no llamarlo: se abre la pantalla donde está el botón y el
+ * comando dice en su mensaje quién tiene que pulsarlo.
+ *
+ * Está separada del catálogo para que un futuro backend con privilegios (Shizuku) entre aquí, y
+ * solo aquí, sin tocar `kill` (architecture.md §4.4).
+ */
+class SystemDialogKiller(private val actions: AppActions) : AppKiller {
+    override val mode = KillMode.SYSTEM_DIALOG
+    override fun requestStop(app: AppEntry): Boolean = actions.openAppSettings(app)
 }

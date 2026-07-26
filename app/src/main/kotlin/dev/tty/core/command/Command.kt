@@ -2,6 +2,7 @@ package dev.tty.core.command
 
 import dev.tty.core.apps.AppActions
 import dev.tty.core.apps.AppCatalog
+import dev.tty.core.apps.AppKiller
 import dev.tty.core.output.Output
 import dev.tty.core.parse.CommandLine
 
@@ -45,6 +46,12 @@ interface Command {
 interface CommandContext {
     val catalog: AppCatalog
     val actions: AppActions
+
+    /**
+     * Detener una app, detrás de su propia interfaz. Ver `AppKiller`: hoy solo se puede abrir el
+     * diálogo del sistema, y el día que haya un backend con privilegios el comando no cambia.
+     */
+    val killer: AppKiller
     val session: Session
     val device: DeviceInfo
 
@@ -96,7 +103,11 @@ class CommandRegistry(commands: List<Command>) {
      */
     suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val command = this[line.verb]
-            ?: return Output.error("${line.verb}: command not found — type help")
+            ?: return Output.error(
+                "${line.verb}: command not found" +
+                    dev.tty.core.text.Suggest.hint(line.verb, byName.keys)
+                        .ifEmpty { " — type help" },
+            )
         return command.run(line, ctx).truncated()
     }
 }
