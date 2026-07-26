@@ -6,81 +6,103 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
-import dev.tty.ui.theme.Palette
-import dev.tty.ui.theme.Spacing
-import dev.tty.ui.theme.Type
+import dev.tty.platform.AppContainer
+import dev.tty.ui.TerminalState
+import dev.tty.ui.terminal.TerminalScreen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /**
- * Actividad HOME de tty.
+ * La actividad HOME de tty. La única del producto.
  *
- * ANDAMIAJE — Fase 0 sin empezar. Esto pinta el degradado y una etiqueta, y nada más: no hay
- * prompt, ni scrollback, ni motor de comandos. Ver docs/planning/plans/00-launcher-base.md.
+ * Reglas que se cumplen aquí y no en otro sitio (docs/architecture.md §3):
+ *  - `onNewIntent` es un **no-op**: pulsar HOME estando dentro no reinicia estado ni animaciones
+ *    (functional.md §5.6). Cualquier reinicialización aquí hace que volver al launcher parpadee.
+ *  - El botón atrás no hace nada, y se inutiliza con `BackHandler`. `onBackPressed()` ya no se
+ *    ejecuta con targetSdk 36+ y **no avisa en compilación**: usarlo dejaría el botón suelto en
+ *    silencio.
+ *  - Edge-to-edge antes de `setContent`. El color de las barras sale del degradado.
+ *  - **Ni una lectura de disco en el hilo principal.** Un ANR aquí es indistinguible de un móvil
+ *    bloqueado, y esta es la pantalla de inicio: no hay a dónde huir.
  *
- * Reglas de esta actividad que ya son definitivas (docs/architecture.md §3):
- *  - `onNewIntent` es un no-op: pulsar HOME estando dentro no reinicia nada.
- *  - El botón atrás no hace nada, y se inutiliza con BackHandler — `onBackPressed()` ya no se
- *    ejecuta con targetSdk 36+ y no avisa en compilación.
- *  - Edge-to-edge obligatorio: el degradado ocupa la ventana entera y los insets se aplican solo
- *    al contenido.
- *  - Nada de I/O en el hilo principal aquí dentro: un ANR en la HOME es indistinguible de un móvil
- *    bloqueado.
+ * El estado sobrevive a rotar, a cambiar el tamaño de fuente y a volver de otra app porque el
+ * `configChanges` del manifest evita que la actividad se recree. Lo que **no** sobrevive es que el
+ * sistema mate el proceso: para eso está el scrollback en disco, no el `Bundle`.
  */
 class MainActivity : ComponentActivity() {
+
+    private lateinit var container: AppContainer
+    private lateinit var state: TerminalState
+
+    /**
+     * Para el arranque. No usa `lifecycleScope` a propósito: `androidx.lifecycle` no es una
+     * dependencia declarada del proyecto y no va a serlo por una sola corrutina.
+     */
+    private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        setContent { TtyScreen() }
+
+        container = AppContainer(this)
+        state = TerminalState(
+            // Lambda y no `container::submit`: los tipos función de Kotlin no son covariantes en el
+            // retorno, así que una `(String) -> List<Line>` no encaja donde se espera
+            // `(String) -> Unit`. Las líneas que devuelve las usará la Fase 5 para animar; aquí se
+            // descartan porque la lista se reconstruye desde el scrollback.
+            submitter = { input -> container.submit(input) },
+            scrollback = container.scrollback,
+        )
+
+        // Se pinta primero y se carga después: el prompt tiene que estar listo antes de que el
+        // teclado termine de subir (criterio 10). Con 2000 líneas en disco la diferencia se nota.
+        setContent { Tty() }
+
+        startupScope.launch {
+            container.restore()
+            state.refresh()
+            // El permiso de ficheros va después del banner, no antes: primero se ve qué es esto.
+            container.requestStorageAccessOnFirstRun()
+            state.refresh()
+        }
     }
 
-    /** Volver al launcher no limpia nada y no reinicia ninguna animación (functional.md §5.6). */
+    @Composable
+    private fun Tty() {
+        // La pantalla raíz del sistema no navega hacia atrás (functional.md §5.7).
+        BackHandler(enabled = true) { }
+        TerminalScreen(state)
+    }
+
+    /** Volver al launcher no limpia nada y no reinicia ninguna animación (§5.6). */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
     }
-}
 
-@Composable
-private fun TtyScreen() {
-    // La pantalla raíz del sistema no navega hacia atrás (functional.md §5.7).
-    BackHandler(enabled = true) { }
-
-    val gradient = remember {
-        Brush.verticalGradient(
-            colorStops = Palette.Stops
-                .mapIndexed { i, stop -> stop to Palette.Gradient[i] }
-                .toTypedArray(),
-        )
+    override fun onStart() {
+        super.onStart()
+        container.onStart()
     }
 
-    // El degradado llega a los bordes: el contenedor raíz no lleva padding de insets.
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .drawBehind { drawRect(gradient) },
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = Spacing.Gutter, vertical = Spacing.S3),
-        ) {
-            // Ningún valor visual se escribe aquí: todo sale de ui/theme, que espeja el design
-            // system. Ver docs/design/DESIGN-SYSTEM.md.
-            BasicText(text = "TTY", style = Type.Label)
-        }
+    /**
+     * `onStop`, no `onPause`: la documentación es explícita en que `onPause` no ofrece tiempo
+     * suficiente para guardar. Y aun así es un refuerzo, no la garantía — el sistema mata el
+     * proceso, no la actividad, así que la garantía real es la escritura diferida.
+     */
+    override fun onStop() {
+        container.onStop()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        startupScope.cancel()
+        state.close()
+        container.close()
+        super.onDestroy()
     }
 }

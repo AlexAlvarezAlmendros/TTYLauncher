@@ -42,11 +42,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // `src/main/kotlin` y `src/test/kotlin` ya son directorios de fuentes por defecto: no se
-    // declaran. Y no hay bloque `kotlin { compilerOptions { jvmTarget } }` porque con el Kotlin
-    // integrado de AGP 9 el jvmTarget deriva de `compileOptions.targetCompatibility`; declararlo
-    // solo crea dos sitios que se pueden desincronizar.
-    // Verificar ambas cosas al cerrar la tarea 0.1.
+    // Se declaran explícitamente aunque AGP los traiga por defecto. El motivo es el modo de fallo:
+    // si `src/main/kotlin` no estuviera incluido el build falla a gritos, pero si no lo estuviera
+    // `src/test/kotlin` los tests simplemente no existirían y todo pasaría en verde. Un aviso de
+    // deprecación es preferible a 107 tests invisibles.
+    sourceSets["main"].kotlin.srcDirs("src/main/kotlin")
+    sourceSets["test"].kotlin.srcDirs("src/test/kotlin")
+
+    // No hay bloque `kotlin { compilerOptions { jvmTarget } }`: con el Kotlin integrado de AGP 9 el
+    // jvmTarget deriva de `compileOptions.targetCompatibility`, y declararlo crearía dos sitios que
+    // se pueden desincronizar.
 }
 
 dependencies {
@@ -55,6 +60,7 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.coroutines.android)
 
     // Herramientas, no runtime: `ui-tooling` solo entra en debug.
     debugImplementation(libs.compose.ui.tooling)

@@ -6,8 +6,9 @@ se contradicen, manda el funcional y este se corrige.
 
 > **Estado de verificación.** Todo lo técnico de este documento se investigó contra documentación
 > oficial y código de AOSP el 26/07/2026, y las afirmaciones de riesgo alto pasaron por una ronda
-> de refutación. **Nada se ha compilado todavía**: la máquina de desarrollo no tiene JDK, Gradle ni
-> Android SDK. Trátese como diseño verificado documentalmente, no como código probado.
+> de refutación. Desde el 26/07/2026 **la Fase 0 compila y sus tests pasan**, así que las recetas
+> de las §§3-8 están validadas por el compilador. Lo que sigue sin validar es el comportamiento en
+> pantalla: no hay dispositivo conectado.
 
 ---
 
@@ -794,10 +795,9 @@ I/O en el hilo principal.
 
 ## 9. Toolchain y versiones
 
-> **Verificado documentalmente el 26/07/2026, sin compilar.** La primera tarea real del proyecto
-> (0.0/0.1) es instalar el toolchain y confirmar que esta combinación sincroniza. Si alguna versión
-> no existe o no encaja, se corrige aquí y en `gradle/libs.versions.toml`, que es el único sitio
-> donde viven los números.
+> **Verificado compilando el 26/07/2026.** La combinación entera sincroniza, `assembleDebug`
+> produce un APK y los 107 tests de JVM pasan. Los números viven en `gradle/libs.versions.toml` y
+> en ningún otro sitio.
 
 | Pieza | Versión | Nota |
 |---|---|---|

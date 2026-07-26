@@ -14,13 +14,19 @@
         <!-- Fase 4 — Termux: <package android:name="com.termux" /> -->
     </queries>
 
+    <!-- Fase 1: abre el diálogo de desinstalación del sistema. No desinstala nada por su cuenta. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
     <!--
-      Fase 1 — <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
-      Fase 2 — <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-               No es un runtime permission: se concede en una pantalla de Ajustes
-               (ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION con Uri "package:dev.tty") y el
-               estado se comprueba en onResume con Environment.isExternalStorageManager().
-               KILL_BACKGROUND_PROCESSES NO se declara: desde Android 14 no sirve para nada.
+      Fase 2: la raíz del shell es /sdcard. No es un runtime permission — se concede en una
+      pantalla de Ajustes (ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION con Uri "package:dev.tty")
+      y el estado se comprueba con Environment.isExternalStorageManager().
+      Ni con él se abren /sdcard/Android/data ni /obb: cerrados a todas las apps desde Android 11.
+    -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+    <!--
+      KILL_BACKGROUND_PROCESSES NO se declara: desde Android 14 no sirve para nada.
       Fase 4 — <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
     -->
 
