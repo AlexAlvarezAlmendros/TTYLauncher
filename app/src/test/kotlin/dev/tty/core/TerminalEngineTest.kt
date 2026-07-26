@@ -94,15 +94,31 @@ private class FakeFiles(
     override fun requestStorageAccess(): Boolean { requests++; return true }
 }
 
+
+/** Un almacén de scripts en memoria: los tests del motor no tocan el disco. */
+private class FakeScripts(private val items: MutableMap<String, dev.tty.core.script.Script> = mutableMapOf()) :
+    dev.tty.core.script.ScriptStore {
+    override suspend fun list() = items.values.sortedBy { it.name }
+    override suspend fun read(name: String) = items[name]
+    override suspend fun write(script: dev.tty.core.script.Script): Boolean { items[script.name] = script; return true }
+    override suspend fun delete(name: String) = items.remove(name) != null
+    override suspend fun seedExamples() = Unit
+}
+
 private class FakeContext(
     override val catalog: AppCatalog = FakeCatalog(),
     override val actions: AppActions = FakeActions(),
     override val killer: AppKiller = FakeKiller(),
     override val files: dev.tty.core.command.builtin.FileSystemAccess = FakeFiles(),
+    override val scripts: dev.tty.core.script.ScriptStore = FakeScripts(),
     override val session: Session = FakeSession(),
     override val device: DeviceInfo = FakeDevice,
     override val commands: List<Command> = emptyList(),
-) : CommandContext
+) : CommandContext {
+    var recordingStarted: String? = null
+    override fun isReservedName(name: String) = false
+    override fun startRecording(name: String) { recordingStarted = name }
+}
 
 /** Un comando que devuelve lo que se le da, para comprobar que la salida llega entera. */
 private object EchoCommand : Command {

@@ -653,7 +653,49 @@ Un script se detiene en la primera línea que falla, y se imprime la salida acum
 punto más el error. Fallar rápido y mostrar el trabajo: en un script de tres líneas, saber
 cuál falló es toda la información que hace falta.
 
-### 8.6 Límites
+### 8.6 Gestión: `ls`, `cat` y `rm`
+
+> **Escrito el 2026-07-26, pendiente de visto bueno.** La ficha de `script` en la §6.2 decía
+> «cuatro subcomandos: `ls`, `new`, `cat`, `rm`. Ver sección 8», y la §8 solo especificaba `new`.
+> Esto cierra el hueco derivándolo de las convenciones que el producto ya tiene, no inventando.
+
+**`script ls`** — dos columnas, nombre y número de líneas, con el total al final. La misma forma que
+`apps` porque es el mismo tipo de salida: un inventario.
+
+```
+> script ls
+focus     3 lines
+morning   5 lines
+
+2 scripts
+```
+
+Sin scripts, una línea de estado: `no scripts`. No es un error — no tener scripts es lo normal el
+primer día.
+
+**`script cat <nombre>`** — las líneas tal y como se guardaron, **sin el prefijo `…`** y sin
+numerar. Lo que se imprime tiene que poder volver a grabarse tal cual.
+
+```
+> script cat focus
+kill instagram
+kill tiktok
+open $1
+```
+
+**`script rm <nombre>`** — borra, e imprime constancia. Es destructivo, así que no puede ser
+silencioso (principio 4), pero tampoco pide confirmación: la misma regla que `clear` y que el `rm`
+de ficheros.
+
+```
+> script rm focus
+removed focus
+```
+
+Un nombre que no existe es un error con sugerencia, como cualquier otro:
+`script: 'focs' not found — did you mean focus?`
+
+### 8.7 Límites
 
 - Profundidad máxima de anidamiento: 4 (un script puede llamar a otro).
 - Máximo de líneas ejecutadas por script: 200.

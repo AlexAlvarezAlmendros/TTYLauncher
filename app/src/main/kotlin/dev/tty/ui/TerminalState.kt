@@ -47,6 +47,14 @@ class TerminalState(
 
     private val running = mutableIntStateOf(0)
 
+    private val _promptSymbol = androidx.compose.runtime.mutableStateOf(">")
+
+    /** El símbolo del prompt: `…` mientras se graba un script. Lo decide el motor, no la UI. */
+    val promptSymbol: String get() = _promptSymbol.value
+
+    /** Cómo preguntarle al motor por el símbolo. Lo inyecta quien construye el estado. */
+    var symbolProvider: () -> String = { ">" }
+
     /** Si hay alguna ejecución viva. La Fase 5 lo lee para elegir el glifo; nadie bloquea con él. */
     val busy: Boolean get() = running.intValue > 0
 
@@ -108,6 +116,7 @@ class TerminalState(
     }
 
     private fun sync() {
+        _promptSymbol.value = symbolProvider()
         // Reconstruir la lista entera cuesta lo que copiar 2000 referencias, y a cambio no hay
         // ninguna ruta por la que el espejo pueda divergir del scrollback. Las keys son los ids, así
         // que Compose reutiliza los ítems y no se pierde la posición del scroll.

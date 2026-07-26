@@ -33,14 +33,18 @@ import dev.tty.core.command.builtin.HelpCommand
 import dev.tty.core.command.builtin.InfoCommand
 import dev.tty.core.command.builtin.KillCommand
 import dev.tty.core.command.builtin.OpenCommand
+import dev.tty.core.command.builtin.ScriptCommand
 import dev.tty.core.command.builtin.SettingsCommand
 import dev.tty.core.command.builtin.UninstallCommand
 import dev.tty.core.output.Line
 import dev.tty.core.output.Role
 import dev.tty.core.scrollback.Scrollback
+import dev.tty.core.script.ScriptRunner
+import dev.tty.core.script.ScriptStore
 import dev.tty.platform.apps.LauncherAppsCatalog
 import dev.tty.platform.apps.SystemDialogKiller
 import dev.tty.platform.fs.AndroidStorage
+import dev.tty.platform.store.FileScriptStore
 import dev.tty.platform.store.ScrollbackStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,6 +96,14 @@ class AppContainer(context: Context) {
      */
     private val storage: FileSystemAccess = AndroidStorage(appContext)
 
+    /**
+     * Los scripts del usuario. Van en `filesDir`, no en `noBackupFilesDir`: son configuración
+     * escrita a mano, y perderla al cambiar de móvil sí sería una pérdida.
+     */
+    private val scriptStore: ScriptStore = FileScriptStore(appContext)
+
+    private val scriptRunner = ScriptRunner(scriptStore)
+
     /** Los números del banner (functional.md §11). */
     val device: DeviceInfo = DeviceInfoImpl(launcherApps, scrollback)
 
@@ -142,6 +154,8 @@ class AppContainer(context: Context) {
             DuCommand,
             FindCommand,
             MountCommand,
+            // Fase 3
+            ScriptCommand,
         ),
     )
 
@@ -150,12 +164,19 @@ class AppContainer(context: Context) {
         override val actions: AppActions = launcherApps
         override val killer: AppKiller = this@AppContainer.killer
         override val files: FileSystemAccess = storage
+        override val scripts: ScriptStore = scriptStore
+        override fun isReservedName(name: String): Boolean = registry.isReserved(name)
+        // El motor se declara después: aquí solo se referencia, y esto se invoca en tiempo de
+        // ejecución, no al construir. El tipo de `engine` va anotado explícitamente porque si no
+        // la inferencia entra en bucle — el contexto necesita el motor y el motor el contexto.
+        override fun startRecording(name: String) = this@AppContainer.engine.startRecording(name)
         override val session: Session = this@AppContainer.session
         override val device: DeviceInfo = this@AppContainer.device
         override val commands: List<Command> get() = registry.all
     }
 
-    private val engine = TerminalEngine(registry, scrollback, commandContext)
+    private val engine: TerminalEngine =
+        TerminalEngine(registry, scrollback, commandContext, scriptRunner)
 
     // --- Ciclo de vida de la actividad --------------------------------------------------------
 
@@ -170,8 +191,13 @@ class AppContainer(context: Context) {
      * Se devuelve una copia y no la lista viva del scrollback: quien la reciba no debe verla cambiar
      * bajo los pies.
      */
+    /** `…` mientras se graba un script, `>` el resto del tiempo (functional.md §8.2). */
+    val promptSymbol: String get() = engine.promptSymbol
+
     suspend fun restore(): List<Line> {
         scrollback.restore(store.load())
+        // Los dos ejemplos de la primera ejecución. No pisan nada y se pueden borrar.
+        scriptStore.seedExamples()
 
         // Primera ejecución: no hay historial que enseñar, así que se imprime el banner con los
         // números reales del dispositivo (functional.md §11). La condición es «el scrollback está

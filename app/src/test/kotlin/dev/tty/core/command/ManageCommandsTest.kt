@@ -74,6 +74,15 @@ class ManageCommandsTest {
             override fun scrollbackLines() = 0
         }
         override val commands: List<Command> = emptyList()
+        override val scripts = object : dev.tty.core.script.ScriptStore {
+            override suspend fun list() = emptyList<dev.tty.core.script.Script>()
+            override suspend fun read(name: String): dev.tty.core.script.Script? = null
+            override suspend fun write(script: dev.tty.core.script.Script) = true
+            override suspend fun delete(name: String) = false
+            override suspend fun seedExamples() = Unit
+        }
+        override fun isReservedName(name: String) = false
+        override fun startRecording(name: String) = Unit
     }
 
     private fun ctx(

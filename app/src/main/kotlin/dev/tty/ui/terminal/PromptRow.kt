@@ -71,6 +71,12 @@ fun PromptRow(
     onSubmit: (String) -> Unit,
     modifier: Modifier = Modifier,
     state: TextFieldState = rememberTextFieldState(),
+    /**
+     * `>` normalmente y `…` mientras se graba un script (functional.md §8.2). El símbolo **es** la
+     * señal de que estás en un modo distinto: sin él, teclear en grabación se parecería demasiado a
+     * teclear comandos.
+     */
+    symbol: String = PROMPT_SYMBOL,
 ) {
     val focusRequester = remember { FocusRequester() }
     val windowInfo = LocalWindowInfo.current
@@ -131,7 +137,7 @@ fun PromptRow(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            BasicText(text = PROMPT_SYMBOL, style = Type.BodyDim)
+            BasicText(text = symbol, style = Type.BodyDim)
             Spacer(modifier = Modifier.width(Spacing.S2))
             BasicTextField(
                 state = state,
