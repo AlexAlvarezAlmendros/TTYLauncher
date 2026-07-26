@@ -35,10 +35,13 @@ Dos consecuencias que hay que respetar:
 
 ## Foco actual
 
-**Fase 0 — Sustituye a tu launcher.** El andamiaje está escrito (Gradle, manifest de la actividad
-HOME, tema, paleta y una `MainActivity` que pinta el degradado) pero **no se ha compilado nunca**.
-El siguiente paso es cerrar la 0.0 (toolchain) y la 0.1 (que el proyecto sincronice de verdad); a
-partir de ahí, el prompt y el motor de comandos.
+**Fase 0 — Sustituye a tu launcher.** La fase está **escrita entera**: motor de comandos, catálogo
+de apps, scrollback persistente, los cuatro verbos y la UI de Compose, más 107 tests JVM. Pero
+**no se ha compilado ni ejecutado una sola línea**.
+
+El siguiente paso no es escribir más código: es cerrar la **0.0** —instalar JDK 17 y el Android SDK,
+y generar el wrapper— y después la **0.1**, que el proyecto sincronice de verdad. Hasta entonces
+todas las tareas están en `🔄 En curso` y ninguna en `✅ Hecho`, porque no se ha verificado nada.
 
 **Bloqueo de entorno:** esta máquina no tiene JDK, Gradle ni Android SDK instalados
 (`java`, `gradle` y `adb` no existen en el `PATH`). Nada del andamiaje se ha compilado nunca. La
