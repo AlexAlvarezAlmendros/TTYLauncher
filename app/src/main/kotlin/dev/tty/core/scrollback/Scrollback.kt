@@ -2,6 +2,7 @@ package dev.tty.core.scrollback
 
 import dev.tty.core.Limits
 import dev.tty.core.output.Line
+import dev.tty.core.output.LineGlyph
 import dev.tty.core.output.LineIds
 import dev.tty.core.output.Role
 
@@ -28,14 +29,26 @@ class Scrollback(
     val size: Int get() = _lines.size
 
     /** Añade una línea nueva en cabeza y recorta la cola si hace falta. */
-    fun add(text: String, role: Role): Line {
-        val line = Line(ids.next(), text, role)
+    fun add(text: String, role: Role, glyph: LineGlyph? = null): Line {
+        val line = Line(ids.next(), text, role, glyph)
         _lines.addFirst(line)
         trim()
         return line
     }
 
     fun addAll(items: List<Pair<String, Role>>): List<Line> = items.map { (t, r) -> add(t, r) }
+
+    /**
+     * Pone el glifo de una línea ya añadida.
+     *
+     * Lo necesita el eco: se escribe **antes** de ejecutar —la entrada se ecoa siempre antes de la
+     * salida (§5.3)— pero su glifo depende de cómo termine el comando. Buscar por id y no por
+     * posición, porque entre medias pueden haber entrado más líneas.
+     */
+    fun setGlyph(id: Long, glyph: LineGlyph) {
+        val index = _lines.indexOfFirst { it.id == id }
+        if (index >= 0) _lines[index] = _lines[index].copy(glyph = glyph)
+    }
 
     /**
      * Carga el historial persistido. Las líneas llegan **en orden cronológico** (la más antigua

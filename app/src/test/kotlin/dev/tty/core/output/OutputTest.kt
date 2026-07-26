@@ -45,7 +45,7 @@ class OutputTest {
         // El aviso ocupa una de las líneas del cupo: el total es EXACTAMENTE el límite, nunca uno
         // más. Un límite que se pasa por uno no es un límite.
         assertEquals(Limits.COMMAND_OUTPUT_LINES, t.lines.size)
-        assertEquals("… ${sobran + 1} more lines", t.lines.last().first)
+        assertEquals("${sobran + 1} more lines not shown", t.lines.last().first)
         assertEquals(Role.STATUS, t.lines.last().second)
     }
 
@@ -55,14 +55,14 @@ class OutputTest {
 
         assertEquals("line 0", t.lines.first().first)
         assertEquals("line ${Limits.COMMAND_OUTPUT_LINES - 2}", t.lines[Limits.COMMAND_OUTPUT_LINES - 2].first)
-        assertEquals("… 8 more lines", t.lines[Limits.COMMAND_OUTPUT_LINES - 1].first)
+        assertEquals("8 more lines not shown", t.lines[Limits.COMMAND_OUTPUT_LINES - 1].first)
     }
 
     @Test
     fun `una sola linea de mas ya se anuncia, en singular`() {
         // Sobra una respecto al cupo, pero el aviso también ocupa sitio: se van dos.
         val t = deLineas(Limits.COMMAND_OUTPUT_LINES + 1).truncated()
-        assertEquals("… 2 more lines", t.lines.last().first)
+        assertEquals("2 more lines not shown", t.lines.last().first)
 
         // Y el singular se escribe en singular: "1 more lines" es de robot.
         val justa = deLineas(Limits.COMMAND_OUTPUT_LINES).truncated()
@@ -72,13 +72,13 @@ class OutputTest {
     @Test
     fun `recortar es idempotente`() {
         // Como el aviso entra dentro del cupo, el resultado mide justo el límite y una segunda
-        // pasada no toca nada: ni recorta otra vez, ni falsea la cuenta con un "… 1 more lines"
+        // pasada no toca nada: ni recorta otra vez, ni falsea la cuenta con un "1 more lines not shown"
         // que se comería la cifra real.
         val una = deLineas(Limits.COMMAND_OUTPUT_LINES + 5).truncated()
         val dos = una.truncated()
 
         assertEquals(una.lines, dos.lines)
-        assertEquals("… 6 more lines", dos.lines.last().first)
+        assertEquals("6 more lines not shown", dos.lines.last().first)
         assertEquals(1, dos.lines.count { it.second == Role.STATUS })
     }
 
@@ -106,16 +106,22 @@ class OutputTest {
     fun `cada rol tiene su prefijo`() {
         assertEquals("", Role.OUTPUT.prefix)
         assertEquals("", Role.STATUS.prefix)
-        assertEquals("> ", Role.ECHO.prefix)
-        assertEquals("! ", Role.ERROR.prefix)
+        // ECHO y ERROR ya no llevan prefijo de carácter: su celda la ocupa un glifo congelado
+        // (§4.4). El `…` de grabación sí se mantiene, porque REC ya informa desde el prompt.
+        assertEquals("", Role.ECHO.prefix)
+        assertEquals("", Role.ERROR.prefix)
         assertEquals("… ", Role.RECORDING.prefix)
     }
 
     @Test
-    fun `render antepone el prefijo del rol`() {
-        assertEquals("> open spotify", Line(0, "open spotify", Role.ECHO).render())
-        assertEquals("! open: 'wh' is ambiguous", Line(1, "open: 'wh' is ambiguous", Role.ERROR).render())
+    fun `render antepone el prefijo del rol, y ECHO y ERROR ya no llevan`() {
+        // La celda del `>` y la del `!` la ocupa ahora un glifo congelado (§4.4), así que el texto
+        // sale limpio: el prefijo lo pone la UI dibujando, no la cadena.
+        assertEquals("open spotify", Line(0, "open spotify", Role.ECHO).render())
+        assertEquals("open: 'wh' is ambiguous", Line(1, "open: 'wh' is ambiguous", Role.ERROR).render())
         assertEquals("spotify", Line(2, "spotify", Role.OUTPUT).render())
+        // El de grabación sí sigue siendo un carácter.
+        assertEquals("… kill tiktok", Line(3, "kill tiktok", Role.RECORDING).render())
     }
 
     @Test

@@ -21,7 +21,7 @@ object ClearCommand : Command {
     override val name = "clear"
     override val aliases = setOf("cls", "clean")
     override val syntax = "clear"
-    override val summary = "erase the scrollback, in memory and on disk"
+    override val summary = "erase scrollback"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         ctx.session.clearScrollback()

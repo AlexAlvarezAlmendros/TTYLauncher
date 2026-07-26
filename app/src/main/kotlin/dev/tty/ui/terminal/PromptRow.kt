@@ -1,5 +1,6 @@
 package dev.tty.ui.terminal
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -94,6 +95,13 @@ fun PromptRow(
      */
     glyph: dev.tty.ui.glyph.GlyphState? = null,
     reducedMotion: Boolean = false,
+    /**
+     * Sube en cada ejecución para disparar el barrido de la línea del prompt (§4.6.3).
+     *
+     * **Ese barrido *es* el «enter» hecho visible**: es lo que confirma que la línea salió, sin
+     * imprimir un «ejecutando…» que sería ruido.
+     */
+    sweepKey: Int = 0,
     /**
      * El control del historial de entradas (§5.4): **un solo control táctil**, no dos. Recorre de
      * más reciente a más antiguo y vuelve a empezar; no hay «atrás y adelante», porque un segundo
@@ -246,13 +254,38 @@ fun PromptRow(
 
         Spacer(modifier = Modifier.height(Spacing.S2))
 
-        // El único borde del producto (functional.md §4.8). La Fase 5 le añade el barrido de luz de
-        // izquierda a derecha, una vez por ejecución: ese barrido es el «enter» hecho visible.
+        // El único borde del producto (§4.8), con el barrido de luz que lo recorre una vez por
+        // ejecución. El progreso se lee DENTRO del lambda de dibujo: leerlo fuera recompondría el
+        // árbol entero en cada fotograma del barrido.
+        val sweep = remember(sweepKey) { Animatable(0f) }
+        LaunchedEffect(sweepKey) {
+            if (sweepKey > 0 && !reducedMotion) {
+                sweep.snapTo(0f)
+                sweep.animateTo(1f, tween(durationMillis = SWEEP_MS, easing = Motion.Ease))
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(Spacing.RuleWidth)
-                .background(Palette.Rule),
+                .background(Palette.Rule)
+                .drawBehind {
+                    val p = sweep.value
+                    if (p <= 0f || p >= 1f) return@drawBehind
+
+                    // Una banda de luz que cruza de izquierda a derecha. Se apaga en los extremos
+                    // para que no aparezca ni desaparezca de golpe.
+                    val width = size.width * SWEEP_WIDTH
+                    val head = (size.width + width) * p - width
+                    val intensity = kotlin.math.sin(p * kotlin.math.PI).toFloat()
+                    drawRect(
+                        color = Palette.TextPrimary,
+                        topLeft = Offset(head, 0f),
+                        size = Size(width, size.height),
+                        alpha = intensity,
+                    )
+                },
         )
     }
 }
@@ -339,3 +372,13 @@ private fun HistoryHandle(cell: Dp, onCycle: () -> Unit) {
         }
     }
 }
+
+/**
+ * El barrido dura lo que una transición corta. No está en `Motion` porque el design system no lo
+ * publica como token propio: se deriva del techo de `settle`, que es la referencia de «un solo
+ * disparo que se ve y se olvida».
+ */
+private const val SWEEP_MS = Motion.SETTLE_CAP_MS
+
+/** Ancho de la banda, en fracción del ancho de la línea. */
+private const val SWEEP_WIDTH = 0.22f

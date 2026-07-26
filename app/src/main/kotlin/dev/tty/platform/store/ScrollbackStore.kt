@@ -5,6 +5,7 @@ import android.util.AtomicFile
 import androidx.core.util.writeText
 import dev.tty.core.Limits
 import dev.tty.core.output.Line
+import dev.tty.core.scrollback.ScrollbackFormat
 import dev.tty.core.output.Role
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +75,7 @@ class ScrollbackStore(
             val read = readRaw()
             if (read.truncatedTail || read.total > Limits.SCROLLBACK_LINES) writeAll(read.lines)
             linesOnDisk = read.lines.size
-            read.lines.map { decode(it) }
+            read.lines.mapNotNull { ScrollbackFormat.decode(it) }
         }
     }
 
@@ -89,7 +90,7 @@ class ScrollbackStore(
     fun append(lines: List<Line>) {
         if (lines.isEmpty()) return
         synchronized(pending) {
-            for (line in lines) pending.addLast(encode(line))
+            for (line in lines) pending.addLast(ScrollbackFormat.encode(line))
         }
         schedule()
     }
@@ -208,25 +209,11 @@ class ScrollbackStore(
      * Una línea del scrollback es **una línea del fichero**: un salto de línea colado en el texto
      * rompería el formato al releer, así que se aplana a espacio.
      */
-    private fun encode(line: Line): String {
-        val text = line.text.replace('\n', ' ').replace('\r', ' ')
-        return line.role.name + " " + text
-    }
 
     private fun encodeBlock(lines: List<String>): String =
         if (lines.isEmpty()) "" else lines.joinToString(separator = "\n", postfix = "\n")
 
     /** Lectura tolerante de una línea: sin rol conocido, es [Role.OUTPUT] con el texto entero. */
-    private fun decode(raw: String): Pair<String, Role> {
-        val space = raw.indexOf(' ')
-        if (space < 0) {
-            // Una línea vacía se escribió como "OUTPUT " y el trim de la lectura pudo comérselo.
-            val role = ROLES[raw]
-            return if (role != null) "" to role else raw to Role.OUTPUT
-        }
-        val role = ROLES[raw.substring(0, space)] ?: return raw to Role.OUTPUT
-        return raw.substring(space + 1) to role
-    }
 
     // --- Lectura cruda -----------------------------------------------------------------------
 

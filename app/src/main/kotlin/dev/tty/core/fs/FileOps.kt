@@ -333,6 +333,13 @@ object FileOps {
         if (isDir && !recursive) return FsResult.Failure(FsError.IsADirectory)
         val target = if (Files.isDirectory(to)) to.resolve(from.fileName) else to
 
+        // `cp -r . copia` copiaría dentro de sí mismo: `walkFileTree` iría encontrando lo que la
+        // propia copia va creando y no terminaría nunca — y colgar la pantalla de inicio es un
+        // móvil inutilizable. Se rechaza antes de empezar, como hace cualquier `cp`.
+        if (isDir && target.normalize().startsWith(from.normalize())) {
+            return FsResult.Failure(FsError.Other("cannot copy a directory into itself"))
+        }
+
         return try {
             if (!isDir) {
                 Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING)

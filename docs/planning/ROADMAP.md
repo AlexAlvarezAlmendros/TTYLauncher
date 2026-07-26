@@ -128,25 +128,47 @@ uso: cuanto más variada es la salida, mejor se juzga si el movimiento envejece 
   JVM; los efectos (abrir, matar, desinstalar, Termux) entran por interfaces implementadas en la
   capa `platform/`. Es lo que permite testear la resolución de apps y los scripts sin emulador.
 
-## Deuda conocida al cerrar las seis fases
+## Deuda saldada el 2026-07-26
 
-Salió de la revisión final del 2026-07-26, que leyó el proyecto entero contra la especificación.
-Está aquí y no escondida en un TODO porque **lo que no se anota, no se arregla**:
+La revisión final dejó seis cosas anotadas y están las seis hechas. Se escriben aquí, y no se borran,
+porque saber **qué se arregló y por qué estaba mal** es lo que evita volver a meterlo:
 
-- **Los glifos `OK` y `FAIL` no se dibujan.** `lineGlyph()` existe y no la llama nadie; el
-  scrollback sigue usando los prefijos `>` y `!` como caracteres. La §4.4 dice que el glifo los
-  sustituye. Cablearlo toca el contrato de salida, así que es trabajo con cabeza, no un parche.
-- **La caída al limpiar y el destello del eco** (`Motion.CLEAR_MS`, `Motion.ECHO_MS`) están
-  declaradas y sin consumidor, igual que el barrido de la línea del prompt. Son tres de las cinco
-  microanimaciones de la §4.6.
-- **`help` puede no caber en una pantalla** con 26 verbos: la fila más ancha ronda las 78 celdas.
-  Es el criterio 4, y no lo mide ningún test. `Columns.widthOf` existe justo para eso y no se usa.
-- **`Type.Label` no lo usa nadie**: el banner sale como cuerpo atenuado en vez de como etiqueta, así
-  que el producto tiene un solo tamaño tipográfico y no los dos de la §4.3.
-- **Los quince verbos de fichero no tienen tests propios.** `Cage` y `FileOps` sí; la costura entre
-  ambos —que `rm` llame a la jaula antes de borrar— no.
-- **El formato del scrollback en disco** (`encode`/`decode`/lectura tolerante) vive en `platform/` y
-  por eso ningún test lo cubre, pese a que el CLAUDE.md lo exige por escrito.
+- **Los glifos `OK` y `FAIL` ya se dibujan.** `Line` lleva un `glyph` que pone el motor: un eco
+  recibe `OK` o `FAIL` según cómo terminara su comando, y cada error el suyo. El scrollback los
+  pinta **congelados** en la celda donde iban los prefijos `>` y `!`, que ahora son cadena vacía —
+  la §4.4 decía que el glifo los sustituye, y hasta hoy convivían los dos.
+- **Las tres microanimaciones que faltaban.** El destello del eco (80ms al 60%), el barrido de luz
+  de la línea del prompt —una vez por ejecución, «el enter hecho visible»— y la caída al limpiar.
+  `clear` ya no vacía la pantalla en un fotograma: la deja caer 120ms, que es lo que distingue «se
+  borró» de «falló al cargar».
+- **`help` cabe.** Los `summary` se acortaron hasta que ninguna fila pasa de 46 celdas, y hay un
+  test que **lee `AppContainer` y falla si alguien añade un verbo sin medirlo**. Es el criterio 4, y
+  ahora tiene dueño.
+- **`Type.Label` se usa.** Entró el rol `LABEL` y el banner sale con él: el producto tiene por fin
+  los **dos** tamaños de la §4.3 y no uno.
+- **Los quince verbos de fichero tienen 18 tests** que comprueban la costura entre la jaula y las
+  operaciones —que `rm` llame a la jaula antes de borrar— mirando el estado del disco, no solo el
+  mensaje.
+- **El formato del scrollback bajó a `core/`** y tiene 23 tests, incluida la lectura tolerante a la
+  última línea truncada que el `CLAUDE.md` exigía por escrito y nadie cubría.
+
+Y cuatro bugs que salieron al hacerlo, ninguno detectable compilando:
+
+- El glifo del eco **no llegaba al disco**: el motor lo ponía en el scrollback pero devolvía la línea
+  vieja, y es esa la que se persiste. Al reiniciar, el historial parecía que todo había ido bien.
+- `mkdir -p a/b/c` **fallaba**: la jaula canonicalizaba el padre inmediato con `toRealPath()`, que
+  exige que exista — justo lo que `-p` viene a resolver. El flag era código muerto para más de un
+  nivel.
+- `cp -r . copia` **no terminaba nunca**: el recorrido iba encontrando lo que la propia copia creaba.
+- `Environment.isExternalStorageManager()` es API 30 con `minSdk 26`: crasheaba la actividad HOME en
+  Android 8-10 con un `Error` que ningún `catch` recogía.
+
+## Lo que sigue pendiente
+
+- **Verlo en un móvil.** Es lo único que queda de las seis fases, y no es poco: 44 tareas esperan
+  una pantalla. Ninguna cantidad de tests sustituye a desbloquear el teléfono y escribir.
+- **Termux nunca se ha ejecutado contra el de verdad.** Los tests cubren la lógica con dobles.
+- **El autocompletado por tabulador**, que espera a que aparezca un gesto que convenza.
 
 ## Decisiones abiertas
 

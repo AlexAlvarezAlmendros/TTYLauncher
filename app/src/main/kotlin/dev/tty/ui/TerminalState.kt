@@ -69,6 +69,11 @@ class TerminalState(
     /** Si lo que corre es una ejecución en Termux: el glifo `SHELL` en vez de `BUSY` (§4.4). */
     val shellBusy: Boolean get() = shell.intValue > 0
 
+    private val _executions = mutableIntStateOf(0)
+
+    /** Cuántas líneas se han enviado. Dispara el barrido del prompt, una vez por ejecución. */
+    val executions: Int get() = _executions.intValue
+
     private val _restoredCount = mutableIntStateOf(0)
 
     /**
@@ -100,6 +105,7 @@ class TerminalState(
         if (input.isBlank()) return
 
         running.intValue += 1
+        _executions.intValue += 1
         scope.launch {
             try {
                 // Devuelve las líneas nuevas, de la más antigua a la más reciente, para que la
@@ -108,7 +114,10 @@ class TerminalState(
                 submitter(input)
             } finally {
                 running.intValue -= 1
-                sync()
+                // Un scrollback vacío después de ejecutar solo lo produce `clear`. Detectarlo así
+                // —y no preguntándole al comando— mantiene a la UI sin saber qué hace cada verbo,
+                // que es la propiedad que hace que esto no se rompa al añadir el siguiente.
+                if (scrollback.size == 0 && _lines.isNotEmpty()) fallAndClear() else sync()
             }
         }
 
@@ -118,6 +127,32 @@ class TerminalState(
         // eco en el scrollback. Este segundo sync lo publica. Si el comando no suspendió, es un
         // no-op porque el `finally` ya sincronizó.
         sync()
+    }
+
+    private val _falling = androidx.compose.runtime.mutableStateOf(false)
+
+    /**
+     * Si el historial está cayendo por un `clear` (§4.6.5).
+     *
+     * `clear` **no hace desaparecer** el historial: lo deja caer y desvanecerse hacia abajo en
+     * 120ms. La diferencia importa porque una pantalla que se vacía en un fotograma no distingue
+     * «se borró» de «falló al cargar», y `clear` es el único borrado real del producto.
+     */
+    val falling: Boolean get() = _falling.value
+
+    /**
+     * Vacía la pantalla con la caída.
+     *
+     * El orden es al revés que en todo lo demás: primero se anima con las líneas todavía puestas, y
+     * solo cuando la caída termina se publica el scrollback ya vacío.
+     */
+    private fun fallAndClear() {
+        _falling.value = true
+        scope.launch {
+            kotlinx.coroutines.delay(dev.tty.ui.theme.Motion.CLEAR_MS.toLong())
+            _falling.value = false
+            sync()
+        }
     }
 
     /**
@@ -141,6 +176,8 @@ class TerminalState(
 
     private fun sync() {
         _promptSymbol.value = symbolProvider()
+        // Mientras cae, la lista se queda como estaba: es lo que hay que animar.
+        if (_falling.value) return
         // Reconstruir la lista entera cuesta lo que copiar 2000 referencias, y a cambio no hay
         // ninguna ruta por la que el espejo pueda divergir del scrollback. Las keys son los ids, así
         // que Compose reutiliza los ítems y no se pierde la posición del scroll.

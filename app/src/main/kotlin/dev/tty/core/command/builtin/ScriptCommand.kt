@@ -21,7 +21,7 @@ object ScriptCommand : Command {
     override val name = "script"
     override val aliases = setOf("s")
     override val syntax = "script <ls|new|cat|rm> [name]"
-    override val summary = "manage saved scripts"
+    override val summary = "saved scripts"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val sub = line.tokens.firstOrNull()?.lowercase()

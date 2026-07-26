@@ -99,6 +99,45 @@ class Cage(root: Path) {
     }
 
     /**
+     * Como [checkParent], pero para `mkdir -p`, donde **la cadena entera de padres puede faltar**.
+     *
+     * [checkParent] exige que el padre inmediato exista, que es justo lo que `-p` viene a resolver:
+     * con él, `mkdir -p a/b/c` moría en la jaula antes de llegar a crear nada y el flag no servía
+     * para más de un nivel.
+     *
+     * Se canonicaliza el ancestro **más profundo que sí existe** y el resto se añade sin resolver.
+     * Es seguro por construcción: lo que no existe no puede ser un symlink, así que no hay nada que
+     * `toRealPath()` viera y la resolución léxica no; y lo que sí existe pasa por `toRealPath()`
+     * exactamente igual que en el resto de la jaula.
+     *
+     * El [normalize] final **no** es una excepción a la regla 1, es su consecuencia: sobre una ruta
+     * ya canónica más una cola sin symlinks, colapsar `..` es lo mismo que haría el kernel. Y es
+     * imprescindible: sin él, `mkdir -p a/../../evil` empieza por la raíz como `Path` y se colaría.
+     */
+    fun checkParents(path: Path): FsResult<Path> {
+        val real = when (val r = deepestReal(path)) {
+            is FsResult.Failure -> return r
+            is FsResult.Success -> r.value.normalize()
+        }
+        return if (contains(real)) FsResult.Success(real) else FsResult.Failure(FsError.OutsideRoot)
+    }
+
+    /** El ancestro más profundo que existe, canonicalizado, con el resto del nombre añadido detrás. */
+    private fun deepestReal(path: Path): FsResult<Path> {
+        try {
+            return FsResult.Success(path.toRealPath())
+        } catch (e: IOException) {
+            // Todavía no existe —o no se puede mirar—: se sigue subiendo.
+        }
+        val parent = path.parent ?: return FsResult.Failure(FsError.OutsideRoot)
+        val name = path.fileName ?: return FsResult.Failure(FsError.OutsideRoot)
+        return when (val r = deepestReal(parent)) {
+            is FsResult.Failure -> r
+            is FsResult.Success -> FsResult.Success(r.value.resolve(name))
+        }
+    }
+
+    /**
      * Contención **por `Path`**, componente a componente. Nunca por `String`: el prefijo textual
      * deja pasar `/sdcard/fotos-evil` contra `/sdcard/fotos`, que es la forma clásica de escaparse.
      */

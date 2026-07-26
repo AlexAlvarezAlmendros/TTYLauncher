@@ -43,6 +43,8 @@ private inline fun withPath(
     ctx: CommandContext,
     arg: String,
     mustExist: Boolean = true,
+    /** Solo `mkdir -p`: el destino puede colgar de una cadena de padres que aún no existe. */
+    creatingParents: Boolean = false,
     body: (Path) -> Output,
 ): Output {
     val fs = ctx.files
@@ -53,7 +55,11 @@ private inline fun withPath(
     val recovered = !fs.cage.revalidateCwd()
 
     val resolved = fs.cage.resolve(arg)
-    val checked = if (mustExist) fs.cage.check(resolved) else fs.cage.checkParent(resolved)
+    val checked = when {
+        mustExist -> fs.cage.check(resolved)
+        creatingParents -> fs.cage.checkParents(resolved)
+        else -> fs.cage.checkParent(resolved)
+    }
     val path = when (checked) {
         is FsResult.Failure -> return Output.error("$verb: ${display(fs.cage, arg)}: ${checked.error.message}")
         is FsResult.Success -> checked.value
@@ -77,7 +83,7 @@ private fun fail(verb: String, arg: String, error: FsError): Output =
 object PwdCommand : Command {
     override val name = "pwd"
     override val syntax = "pwd"
-    override val summary = "print the working directory"
+    override val summary = "working directory"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         ctx.files.cage.revalidateCwd()
@@ -97,7 +103,7 @@ object PwdCommand : Command {
 object CdCommand : Command {
     override val name = "cd"
     override val syntax = "cd [path]"
-    override val summary = "change directory; without arguments, go to the root"
+    override val summary = "change directory"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val fs = ctx.files
@@ -174,7 +180,7 @@ private class EndsCommand(
     private val fromTail: Boolean,
 ) : Command {
     override val syntax = "$name [-n N] <file>"
-    override val summary = if (fromTail) "last lines of a file" else "first lines of a file"
+    override val summary = if (fromTail) "last lines" else "first lines"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val flags = Flags.parse(line.tokens, withValue = setOf('n'))
@@ -207,7 +213,7 @@ val TailCommand: Command = EndsCommand("tail", fromTail = true)
 object MkdirCommand : Command {
     override val name = "mkdir"
     override val syntax = "mkdir [-p] <path>"
-    override val summary = "create a directory"
+    override val summary = "make a directory"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val flags = Flags.parse(line.tokens, known = setOf('p'))
@@ -215,7 +221,9 @@ object MkdirCommand : Command {
         val arg = flags.operands.joinToString(" ").trim()
         if (arg.isEmpty()) return Output.error("$name: needs a name")
 
-        return withPath(name, ctx, arg, mustExist = false) { path ->
+        // Con `-p` el destino puede colgar de padres que aún no existen, así que la jaula tiene que
+        // canonicalizar el ancestro más profundo que sí exista en vez de exigir el padre inmediato.
+        return withPath(name, ctx, arg, mustExist = false, creatingParents = 'p' in flags) { path ->
             when (val r = FileOps.mkdir(path, parents = 'p' in flags)) {
                 is FsResult.Failure -> fail(name, arg, r.error)
                 is FsResult.Success -> Output.silent
@@ -227,7 +235,7 @@ object MkdirCommand : Command {
 object TouchCommand : Command {
     override val name = "touch"
     override val syntax = "touch <file>"
-    override val summary = "create an empty file, or update its date"
+    override val summary = "make an empty file"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val arg = line.tokens.joinToString(" ").trim()
@@ -256,7 +264,7 @@ object TouchCommand : Command {
 object RmCommand : Command {
     override val name = "rm"
     override val syntax = "rm [-r] <path>"
-    override val summary = "remove a file, or a directory with -r"
+    override val summary = "remove for good"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val flags = Flags.parse(line.tokens, known = setOf('r'))
@@ -292,7 +300,7 @@ private class TwoPathCommand(
     private val recursiveFlag: Boolean,
 ) : Command {
     override val syntax = if (recursiveFlag) "$name [-r] <source> <destination>" else "$name <source> <destination>"
-    override val summary = if (recursiveFlag) "copy a file, or a tree with -r" else "move or rename"
+    override val summary = if (recursiveFlag) "copy a file" else "move or rename"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val flags = Flags.parse(line.tokens, known = if (recursiveFlag) setOf('r') else emptySet())
@@ -427,7 +435,7 @@ object FindCommand : Command {
 object MountCommand : Command {
     override val name = "mount"
     override val syntax = "mount"
-    override val summary = "grant access to storage"
+    override val summary = "get storage access"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val fs = ctx.files

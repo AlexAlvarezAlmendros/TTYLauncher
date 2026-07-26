@@ -96,3 +96,27 @@ private val SCRAMBLE = Motion.DECODE_CHARSET
 /** Si una línea con este modo debe animarse, dado el estado del sistema. */
 fun Reveal.isAnimated(reducedMotion: Boolean): Boolean =
     this != Reveal.NONE && !reducedMotion
+
+/**
+ * El destello del eco (§4.6.2).
+ *
+ * Al enviar, la línea aparece con un destello de 80ms al 60% de opacidad antes de asentarse en
+ * atenuado. **Confirma el envío sin imprimir nada**, que es lo que permite que el producto no diga
+ * «ejecutando…» — decirlo sería ruido, y no decir nada dejaría la duda de si la tecla entró.
+ */
+@Composable
+fun rememberEchoFlash(id: Long, enabled: Boolean): State<Float> {
+    if (!enabled) return remember { mutableFloatStateOf(1f) }
+
+    val target = remember(id) { mutableFloatStateOf(ECHO_FLASH_ALPHA) }
+    LaunchedEffect(id) { target.floatValue = 1f }
+
+    return animateFloatAsState(
+        targetValue = target.floatValue,
+        animationSpec = tween(durationMillis = Motion.ECHO_MS, easing = Motion.Ease),
+        label = "echo-flash",
+    )
+}
+
+/** El 60% del que parte el destello. Del design system, no inventado aquí. */
+private const val ECHO_FLASH_ALPHA = 0.6f

@@ -323,7 +323,7 @@ class TerminalEngineTest {
 
         // eco + el cupo entero, con la línea de aviso ya contada dentro
         assertEquals(1 + Limits.COMMAND_OUTPUT_LINES, added.size)
-        assertEquals("… 41 more lines", added.last().text)
+        assertEquals("41 more lines not shown", added.last().text)
         assertEquals(Role.STATUS, added.last().role)
     }
 
