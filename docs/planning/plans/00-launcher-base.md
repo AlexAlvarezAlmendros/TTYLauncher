@@ -47,56 +47,56 @@ esa capa sin tocar el motor.
 | 0.7 | Tokens del design system espejados en `ui/theme/`: color, tipografía, espaciado y movimiento | 🔄 En curso | `Palette.kt`, `Type.kt`, `Spacing.kt` y `Motion.kt` escritos con los valores del [design system](../../design/DESIGN-SYSTEM.md). **Los cinco hexadecimales del degradado están pendientes de confirmar en pantalla real**: el propio design system los marca como interpretación |
 | 0.8 | Tipografía: JetBrains Mono empaquetada con fallback a la monoespaciada del sistema; dos tamaños, un solo peso | ⬜ Listo | §4.3. Hoy se usa `FontFamily.Monospace`: falta empaquetar el `.ttf` (OFL-1.1, ~250 KB) en `res/font` y apuntar `Type.Mono` |
 | 0.9 | Fondo: degradado vertical **fijo al viewport**, dibujado sin recomponer el árbol | 🔄 En curso | Pintado con `drawBehind`. La deriva animada es Fase 5 |
-| 0.10 | Desvanecimiento por antigüedad: opacidad decreciente con la distancia al prompt, mínimo 35% | 🔒 Bloqueado | Necesita 0.14. §4.2 — sustituye a cualquier separador |
+| 0.10 | Desvanecimiento por antigüedad: opacidad decreciente con la distancia al prompt, mínimo 35% | 🔄 En curso | `ScrollbackList.fadeAlpha` derivado del índice. Sin compilar |
 
 ### Prompt y scrollback
 
 | # | Tarea | Estado | Notas |
 |---|-------|--------|-------|
-| 0.11 | Campo de entrada fijo arriba: foco automático y teclado visible sin tocar la pantalla | 🔒 Bloqueado | Criterio 2. Es el que más se rompe en la primera composición |
-| 0.12 | Teclado sin autocorrección, sin autocapitalización, acción "Ir"; enviar limpia el campo y mantiene foco | 🔒 Bloqueado | §5.2, §5.3 |
-| 0.13 | Cursor de bloque parpadeante propio (curva suave), sin el cursor del sistema | 🔒 Bloqueado | §4.6.1. Única microanimación adelantada: sin cursor el campo no se lee |
-| 0.14 | Lista de scrollback invertida: lo nuevo arriba, el historial empujado hacia abajo | 🔒 Bloqueado | §4.1. El prompt **no** es un elemento de la lista |
-| 0.15 | Scroll manual hacia el historial que no rebota solo; cualquier entrada nueva vuelve arriba | 🔒 Bloqueado | §4.1, §5.3 |
-| 0.16 | Límites: 2000 líneas en memoria, 500 líneas por comando | 🔒 Bloqueado | §5.8 |
-| 0.16b | Contrato de líneas: eco de la entrada con `>` **antes de toda salida**, `!` en errores, y entrada vacía como no-op silencioso | 🔒 Bloqueado | §5.3 y §10. Es lo que produce el `> apps whats` de todos los ejemplos. La Fase 5 sustituye estos prefijos por glifos, no los crea |
-| 0.16c | El prompt está en la **misma coordenada vertical** con 0 líneas y con 2000: fuera del árbol de la lista, `imePadding()` solo al historial | 🔒 Bloqueado | §5.1. Es el criterio 11, y es una invariante de layout, no un ajuste |
+| 0.11 | Campo de entrada fijo arriba: foco automático y teclado visible sin tocar la pantalla | 🔄 En curso | `PromptRow` espera a `isWindowFocused` antes de `requestFocus`. **Es el criterio 2 y solo se valida en el dispositivo real** |
+| 0.12 | Teclado sin autocorrección, sin autocapitalización, acción "Ir"; enviar limpia el campo y mantiene foco | 🔄 En curso | Escrito. **Ni `autoCorrectEnabled` ni `KeyboardType.Ascii` apagan el diccionario de Gboard**: decisión abierta que se cierra probando |
+| 0.13 | Cursor de bloque parpadeante propio (curva suave), sin el cursor del sistema | 🔄 En curso | Dibujado con `getBoundingBox` solo si hay carácter debajo y `getCursorRect` + ancho de celda al final. `Palette.CURSOR_ALPHA_MIN` |
+| 0.14 | Lista de scrollback invertida: lo nuevo arriba, el historial empujado hacia abajo | 🔄 En curso | `reverseLayout=false` con la lista ya invertida, `key = id`. El prompt está fuera de la lista |
+| 0.15 | Scroll manual hacia el historial que no rebota solo; cualquier entrada nueva vuelve arriba | 🔄 En curso | `requestScrollToItem(0)` al enviar y al cambiar la cabeza |
+| 0.16 | Límites: 2000 líneas en memoria, 500 líneas por comando | 🔄 En curso | `core/Limits.kt`, un solo sitio. `Output.truncated()` dice cuánto recortó |
+| 0.16b | Contrato de líneas: eco de la entrada con `>` **antes de toda salida**, `!` en errores, y entrada vacía como no-op silencioso | 🔄 En curso | El prefijo lo da `Role`; el eco lo garantiza `TerminalEngine`, no la UI. Con test |
+| 0.16c | El prompt está en la **misma coordenada vertical** con 0 líneas y con 2000: fuera del árbol de la lista, `imePadding()` solo al historial | 🔄 En curso | Column con el prompt fijo y la lista con `weight(1f)`. Verificable solo en pantalla |
 
 ### Motor de comandos (Kotlin puro, sin Android)
 
 | # | Tarea | Estado | Notas |
 |---|-------|--------|-------|
-| 0.17 | Parser de la línea de entrada: verbo, flags, argumento, comillas | 🔒 Bloqueado | Sin pipes, sin redirecciones, sin sustitución (§1.2) |
-| 0.18 | Registro de comandos y despacho; contrato de salida (líneas + rol de cada línea) | 🔒 Bloqueado | El rol es lo que la Fase 5 usará para elegir `settle` o `decode` |
-| 0.19 | Catálogo de apps: enumerar las que exponen actividad de lanzamiento, generar handles | 🔒 Bloqueado | §7. `"Nova Launcher"` → `nova-launcher` |
-| 0.20 | Resolución por rangos (paquete exacto → handle exacto → prefijo → subcadena) y **error ante ambigüedad** | 🔒 Bloqueado | §7.1–7.2. Adelantada desde la Fase 1: `open` sin esto violaría el principio 3 desde el primer día |
-| 0.21 | Frescura del catálogo: instalar/desinstalar/actualizar se refleja sin reiniciar | 🔒 Bloqueado | Criterio 6 |
+| 0.17 | Parser de la línea de entrada: verbo, flags, argumento, comillas | 🔄 En curso | `CommandLine` (tokenizador) + `Flags` (cada comando interpreta los suyos). 27 tests |
+| 0.18 | Registro de comandos y despacho; contrato de salida (líneas + rol de cada línea) | 🔄 En curso | `Command`/`CommandRegistry`/`Output`. El orden incorporado→script→error ya está fijado |
+| 0.19 | Catálogo de apps: enumerar las que exponen actividad de lanzamiento, generar handles | 🔄 En curso | `LauncherAppsCatalog` con `<queries>` MAIN+LAUNCHER. Multiperfil: se queda con el primer perfil (renuncia anotada) |
+| 0.20 | Resolución por rangos (paquete exacto → handle exacto → prefijo → subcadena) y **error ante ambigüedad** | 🔄 En curso | `AppResolver`, Kotlin puro. 21 tests, incluido que un rango posterior no rescata a uno ambiguo |
+| 0.21 | Frescura del catálogo: instalar/desinstalar/actualizar se refleja sin reiniciar | 🔄 En curso | Solo `LauncherApps.Callback`, atado a onStart/onStop. Sin BroadcastReceiver |
 
 ### Comandos de la fase
 
 | # | Tarea | Estado | Notas |
 |---|-------|--------|-------|
-| 0.22 | `help` / `?` / `h` sin argumento — dos columnas, cabe en una pantalla sin scroll horizontal | 🔒 Bloqueado | Criterio 4. Es la única documentación del producto |
-| 0.22b | `help <comando>` — sintaxis, descripción y **alias** de ese comando. Cada fase que añada verbos registra su ficha | 🔒 Bloqueado | §6.2. Es la única salida del producto que imprime los alias |
-| 0.23 | `apps` con `-s` y filtro por subcadena, dos columnas + total | 🔒 Bloqueado | §6.2 |
-| 0.24 | `open` / `o` — éxito **silencioso** | 🔒 Bloqueado | §6.2. Imprimir "abriendo…" sería ruido |
+| 0.22 | `help` / `?` / `h` sin argumento — dos columnas, cabe en una pantalla sin scroll horizontal | 🔄 En curso | Escrito. Que quepa se mide en pantalla, no aquí |
+| 0.22b | `help <comando>` — sintaxis, descripción y **alias** de ese comando | 🔄 En curso | Los alias solo se imprimen aquí, en ningún otro sitio |
+| 0.23 | `apps` con `-s` y filtro por subcadena, dos columnas + total | 🔄 En curso | Sin alias `ls`: es de ficheros. Columnas en celdas de carácter |
+| 0.24 | `open` / `o` — éxito **silencioso** | 🔄 En curso | Devuelve `Output.silent`. Solo habla si la plataforma falla |
 | 0.25 | `clear` / `cls` / `clean` — vacía memoria **y** disco, imprime `scrollback cleared` | 🔒 Bloqueado | §6.2. Único borrado real del producto. La línea se emite con el rol que la Fase 5 renderiza como `decode` (contrato de la 0.18) |
 
 ### Persistencia
 
 | # | Tarea | Estado | Notas |
 |---|-------|--------|-------|
-| 0.26 | Scrollback en almacenamiento privado: append, escritura diferida ~1s, recorte a 2000 líneas | 🔒 Bloqueado | §5.5 |
+| 0.26 | Scrollback en almacenamiento privado: append, escritura diferida ~1s, recorte a 2000 líneas | 🔄 En curso | `noBackupFilesDir/scrollback.log`, append + debounce; compactación con `AtomicFile` |
 | 0.27 | Escritura resistente a que el sistema mate el proceso: `flush()` al vencer el debounce, flush definitivo en `onStop()` (no en `onPause`) y lectura tolerante a una última línea truncada | 🔒 Bloqueado | Criterio 9. **`AtomicFile` no se usa en el camino caliente** — reescribe el fichero entero; su sitio es la compactación de la 0.26 ([architecture.md §6.1](../../architecture.md#61-scrollback)) |
 | 0.28 | Excluir de copia en la nube y de transferencia entre dispositivos | 🔄 En curso | `data_extraction_rules.xml` + `backup_rules.xml` escritos y `noBackupFilesDir` elegido. Falta verificarlo con `bmgr` (§5.5) |
-| 0.29 | Carga al arrancar sin bloquear el primer frame | 🔒 Bloqueado | Criterio 10: visible antes de que aparezca el teclado |
+| 0.29 | Carga al arrancar sin bloquear el primer frame | 🔄 En curso | `setContent` primero, `restore()` en corrutina después |
 
 ### Primera ejecución y calidad
 
 | # | Tarea | Estado | Notas |
 |---|-------|--------|-------|
-| 0.30 | Banner de primera ejecución con `TYPE HELP`. Sin tutorial, sin tour, sin tarjetas | 🔒 Bloqueado | §11. Los números reales del dispositivo son de la Fase 5 |
-| 0.31 | Tests JVM del core: parser, generación de handles, resolución por rangos, ambigüedad, recorte del scrollback | 🔒 Bloqueado | Sin emulador: por eso el core no conoce Android |
+| 0.30 | Banner de primera ejecución con `TYPE HELP`. Sin tutorial, sin tour, sin tarjetas | 🔄 En curso | Condición: scrollback vacío al arrancar. Ya lleva modelo, versión, apps y líneas |
+| 0.31 | Tests JVM del core: parser, generación de handles, resolución por rangos, ambigüedad, recorte del scrollback | 🔄 En curso | 107 tests en 7 ficheros, incluido el de la frontera `core/` sin `android.*`. **Ninguno se ha ejecutado** |
 | 0.32 | Repaso contra §4.8: ni un icono figurativo, ni un color con tono, ni un ripple, ni una esquina redondeada | 🔒 Bloqueado | Criterio 3. Se hace **antes** de cerrar la fase |
 | 0.32b | Auditoría de la §10 sobre cada cadena del producto: minúsculas, sin punto final, errores que no se disculpan, inglés, y un solo nombre por comando entre sintaxis, `help` y error | 🔒 Bloqueado | §10. Se repite al cierre de **cada** fase que añada verbos, igual que la 0.32 con la §4.8 |
 | 0.32c | Verificar el criterio 1 extremo a extremo: desbloquear, escribir 3–4 caracteres, enviar, app abierta. Sin ningún toque adicional | 🔒 Bloqueado | Criterio 1. Es el criterio más importante y el único que se mide con el móvil en la mano |
@@ -121,5 +121,6 @@ más la puerta de fase: **unos días como launcher por defecto sin volver al ant
 | Fecha | Tarea | Notas |
 |-------|-------|-------|
 | 2026-07-26 | — | Plan creado. Bloqueado por 0.0: falta el toolchain de Android en la máquina de desarrollo. |
+| 2026-07-26 | 0.10-0.31 | **Fase 0 implementada, sin compilar.** ~3.900 líneas de Kotlin. `core/` (13 ficheros, Kotlin puro): `Limits`, `Line`/`Role`/`Output`, `CommandLine`+`Flags`, `AppEntry`+`AppResolver`, `Command`/`CommandRegistry`, los cuatro verbos, `Scrollback`, `Columns`, `Banner` y `TerminalEngine`. `platform/` (4): `LauncherAppsCatalog` con `LauncherApps.Callback`, `ScrollbackStore` con append + debounce + compactación atómica, `DeviceInfoImpl` y `AppContainer` (DI a mano por constructor). `ui/` (5): `TerminalSurface`, `PromptRow`, `ScrollbackList`, `TerminalScreen` y `TerminalState`. `MainActivity` atada al ciclo de vida. 107 tests JVM en 7 ficheros. **Nada ejecutado ni compilado**: sigue faltando la 0.0. Se declaró `kotlinx-coroutines-android`, que hasta ahora llegaba solo por transitividad de Compose. |
 | 2026-07-26 | 0.7 | **Design system importado** desde Claude Design («tty Design System», autoría desde esta misma especificación). Los tokens se espejan en `ui/theme/`: `Palette.kt` (cinco paradas, tres niveles de texto, línea del prompt, desvanecimiento, suelo del 18% de la matriz de puntos), `Type.kt`, `Spacing.kt` y `Motion.kt` (todas las duraciones y las dos curvas). Los valores de `Palette.kt` se corrigieron a los del design system: los que había eran una estimación propia. Ver [docs/design/DESIGN-SYSTEM.md](../../design/DESIGN-SYSTEM.md). |
 | 2026-07-26 | 0.1 · 0.3 · 0.4 · 0.5 · 0.6 · 0.7 · 0.9 · 0.28 | **Andamiaje escrito, sin compilar.** Gradle (settings + raíz + `app` + catálogo de versiones + `gradle.properties`), manifest de la actividad HOME con el intent-filter y los atributos definitivos, reglas de exclusión de copia, tema con `windowBackground` de tinta (starting window sin flash blanco), icono adaptativo sin iconografía figurativa, `Palette.kt` con las cinco paradas y los tres niveles de texto, y `MainActivity` mínima: edge-to-edge, `BackHandler` inerte, `onNewIntent` no-op y el degradado a pantalla completa con una etiqueta. **Falta el `gradle-wrapper.jar`** (no se puede generar sin un Gradle instalado) y **ninguna versión del catálogo se ha podido resolver**. Nada de esto cuenta como hecho hasta que 0.0 esté cerrada. |

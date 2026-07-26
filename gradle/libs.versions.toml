@@ -21,6 +21,11 @@ kotlin = "2.2.10"
 composeBom = "2026.06.01"
 activityCompose = "1.13.0"
 coreKtx = "1.17.0"
+# Coroutines llega de todas formas por transitividad de compose-runtime, pero se declara
+# explícitamente: el motor de comandos son funciones `suspend` y la persistencia va a
+# Dispatchers.IO. Depender en silencio de la transitividad de otra librería es cómo se rompe un
+# build al subir el BOM de Compose. -android aporta Dispatchers.Main, que necesita la UI.
+coroutines = "1.10.2"
 junit = "4.13.2"
 
 compileSdk = "37"
@@ -41,7 +46,10 @@ compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 # NOTA: no hay material3, ni Hilt, ni Room, ni DataStore, ni librerías de terceros.
 # Añadir una dependencia es una decisión de producto. Ver CLAUDE.md.
+# Coroutines es la excepción razonada: ya venía por transitividad de Compose y todo el motor
+# depende de ella, así que se declara en vez de fingir que no está.
