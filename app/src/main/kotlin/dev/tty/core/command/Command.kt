@@ -55,6 +55,18 @@ interface CommandContext {
 
     /** La jaula de rutas y el permiso de almacenamiento. Ver `FileSystemAccess`. */
     val files: dev.tty.core.command.builtin.FileSystemAccess
+
+    /** Los scripts guardados. */
+    val scripts: dev.tty.core.script.ScriptStore
+
+    /**
+     * Si un nombre ya está cogido por un comando. Lo consulta `script new` para rechazarlo: un
+     * script nunca puede sombrear un verbo del vocabulario (functional.md §8.4).
+     */
+    fun isReservedName(name: String): Boolean
+
+    /** Arranca el modo grabación. Lo pide `script new`; quien lo sostiene es el motor. */
+    fun startRecording(name: String)
     val session: Session
     val device: DeviceInfo
 
@@ -105,12 +117,18 @@ class CommandRegistry(commands: List<Command>) {
      * forma que espera quien viene de una terminal.
      */
     suspend fun run(line: CommandLine, ctx: CommandContext): Output {
-        val command = this[line.verb]
-            ?: return Output.error(
-                "${line.verb}: command not found" +
-                    dev.tty.core.text.Suggest.hint(line.verb, byName.keys)
-                        .ifEmpty { " — type help" },
-            )
+        val command = this[line.verb] ?: return unknownVerb(line.verb)
         return command.run(line, ctx).truncated()
     }
+
+    /**
+     * El error de un verbo que no existe.
+     *
+     * Lo expone el registro pero lo usa el motor, que solo lo emite **después** de haber buscado
+     * también entre los scripts: el orden es incorporado → script → error.
+     */
+    fun unknownVerb(verb: String): Output = Output.error(
+        "$verb: command not found" +
+            dev.tty.core.text.Suggest.hint(verb, byName.keys).ifEmpty { " — type help" },
+    )
 }

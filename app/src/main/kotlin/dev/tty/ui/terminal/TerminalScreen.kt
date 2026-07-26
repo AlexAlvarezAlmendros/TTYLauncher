@@ -68,7 +68,7 @@ fun TerminalScreen(
                     top = Spacing.S3,
                 ),
         ) {
-            PromptRow(onSubmit = onSubmit)
+            PromptRow(onSubmit = onSubmit, symbol = state.promptSymbol)
             ScrollbackList(
                 lines = lines,
                 listState = listState,

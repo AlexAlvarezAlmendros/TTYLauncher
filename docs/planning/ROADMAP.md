@@ -28,7 +28,7 @@ Dos consecuencias que hay que respetar:
 | 0 | Sustituye a tu launcher | 🔄 En curso | [00-launcher-base.md](plans/00-launcher-base.md) | El móvil arranca en `tty` y se abre cualquier app escribiendo 3–4 letras |
 | 1 | Gestión de apps | 🔄 En curso | [01-gestion-apps.md](plans/01-gestion-apps.md) | `kill`, `uninstall` e `info` funcionan y ningún comando destructivo adivina ante ambigüedad |
 | 2 | Ficheros | 🔒 Bloqueado | [02-ficheros.md](plans/02-ficheros.md) | `cd Download` y `ls` devuelven lo que hay en el teléfono, y nada puede tocar fuera de la raíz |
-| 3 | Scripts | 🔒 Bloqueado | [03-scripts.md](plans/03-scripts.md) | `focus obsidian` ejecuta tres comandos con argumento posicional |
+| 3 | Scripts | 🔄 En curso | [03-scripts.md](plans/03-scripts.md) | `focus obsidian` ejecuta tres comandos con argumento posicional |
 | 4 | Termux | 🔒 Bloqueado | [04-termux.md](plans/04-termux.md) | `tmux build -k "…"` devuelve la foto del pane con la tipografía de `tty` |
 | 5 | Sistema de movimiento | 🔒 Bloqueado | [05-movimiento.md](plans/05-movimiento.md) | Los seis glifos, `settle`/`decode` y las cinco microanimaciones, con movimiento reducido soportado |
 | 6 | Pulido | 🔒 Bloqueado | [06-pulido.md](plans/06-pulido.md) | Historial de entradas, banner real y sugerencia por distancia de edición |
@@ -133,9 +133,9 @@ uso: cuanto más variada es la salida, mejor se juzga si el movimiento envejece 
 Heredadas de [functional.md §15](../functional.md#15-decisiones-abiertas). Las que afectan a
 código y hay que cerrar en algún momento:
 
-- **La §8 no especifica `script ls`, `cat` ni `rm`.** La ficha de la §6.2 dice «Cuatro subcomandos
-  … Ver sección 8», pero la §8 solo detalla `new`. Falta el formato de salida de los otros tres:
-  hay que escribirlo antes de la Fase 2, o el plan 02 lo inventará.
+- ~~La §8 no especifica `script ls`, `cat` ni `rm`.~~ **Escrito el 2026-07-26** en la §8.6, derivado
+  de las convenciones que el producto ya tenía. **Pendiente del visto bueno del usuario**: si el
+  formato no convence, se cambia ahí y el comando lo sigue.
 - **Los cinco hexadecimales del degradado** — el design system los marca como interpretación de la
   especificación. Se confirman calibrando en pantalla real (tarea 0.7) y se actualizan **allí
   primero**.
