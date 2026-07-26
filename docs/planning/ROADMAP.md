@@ -26,7 +26,7 @@ Dos consecuencias que hay que respetar:
 | # | Fase | Estado | Plan | Hito |
 |---|------|--------|------|------|
 | 0 | Sustituye a tu launcher | 🔄 En curso | [00-launcher-base.md](plans/00-launcher-base.md) | El móvil arranca en `tty` y se abre cualquier app escribiendo 3–4 letras |
-| 1 | Gestión de apps | 🔒 Bloqueado | [01-gestion-apps.md](plans/01-gestion-apps.md) | `kill`, `uninstall` e `info` funcionan y ningún comando destructivo adivina ante ambigüedad |
+| 1 | Gestión de apps | 🔄 En curso | [01-gestion-apps.md](plans/01-gestion-apps.md) | `kill`, `uninstall` e `info` funcionan y ningún comando destructivo adivina ante ambigüedad |
 | 2 | Ficheros | 🔒 Bloqueado | [02-ficheros.md](plans/02-ficheros.md) | `cd Download` y `ls` devuelven lo que hay en el teléfono, y nada puede tocar fuera de la raíz |
 | 3 | Scripts | 🔒 Bloqueado | [03-scripts.md](plans/03-scripts.md) | `focus obsidian` ejecuta tres comandos con argumento posicional |
 | 4 | Termux | 🔒 Bloqueado | [04-termux.md](plans/04-termux.md) | `tmux build -k "…"` devuelve la foto del pane con la tipografía de `tty` |

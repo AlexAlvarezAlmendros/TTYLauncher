@@ -61,8 +61,10 @@ object AppResolver {
      * whatsapp-bsns` sirve; `invalid input` no. El nombre del comando va delante porque un error
      * sin verbo no se puede rastrear en un scrollback largo.
      */
-    fun errorFor(verb: String, resolution: Resolution): String = when (resolution) {
-        is Resolution.NotFound -> "$verb: '${resolution.query}' not found"
+    fun errorFor(verb: String, resolution: Resolution, apps: List<AppEntry> = emptyList()): String = when (resolution) {
+        is Resolution.NotFound ->
+            "$verb: '${resolution.query}' not found" +
+                dev.tty.core.text.Suggest.hint(resolution.query, apps.map { it.handle })
         is Resolution.Ambiguous ->
             "$verb: '${resolution.query}' is ambiguous — " +
                 resolution.candidates.joinToString(", ") { it.handle }

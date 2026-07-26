@@ -63,8 +63,52 @@ interface AppCatalog {
     fun all(): List<AppEntry>
 }
 
-/** Los efectos sobre una app. Cada uno lo implementa `platform/`; `core/` solo los invoca. */
+/**
+ * Los efectos sobre una app. Cada uno lo implementa `platform/`; `core/` solo los invoca.
+ *
+ * Todos devuelven `Boolean` y **ninguno lanza**: un fallo de la plataforma se convierte en una línea
+ * de error legible, nunca en una excepción que crashee la actividad HOME.
+ */
 interface AppActions {
-    /** Lanza la app. Devuelve `false` si la plataforma no pudo — nunca lanza excepción. */
+    /** Lanza la app. */
     fun open(app: AppEntry): Boolean
+
+    /** Abre el diálogo de desinstalación del sistema. No desinstala por su cuenta: no puede. */
+    fun requestUninstall(app: AppEntry): Boolean
+
+    /** Abre la pantalla de ajustes de esa app. */
+    fun openAppSettings(app: AppEntry): Boolean
+
+    /** Abre los ajustes generales de Android. */
+    fun openSystemSettings(): Boolean
+}
+
+/**
+ * Detener una app.
+ *
+ * Vive en su propia interfaz **a propósito** (architecture.md §4.4). Desde Android 14
+ * `killBackgroundProcesses()` solo afecta a los procesos de la propia app y sobre cualquier otra
+ * falla en silencio, así que la única implementación posible hoy abre el diálogo del sistema. El
+ * día que exista un backend con privilegios (Shizuku) se añade una segunda implementación **sin que
+ * el comando cambie de nombre ni de sintaxis** — que es justo lo que la §12 del funcional pide
+ * mantener abierto.
+ */
+interface AppKiller {
+
+    /** Cómo se detiene una app con esta implementación. Lo usa `kill` para decir la verdad. */
+    val mode: KillMode
+
+    /**
+     * Pide la detención. Con [KillMode.SYSTEM_DIALOG] eso significa abrir la pantalla donde está el
+     * botón, no detener nada: quien pulsa es el usuario.
+     */
+    fun requestStop(app: AppEntry): Boolean
+}
+
+enum class KillMode {
+    /** Lo único posible sin privilegios desde Android 14. */
+    SYSTEM_DIALOG,
+
+    /** Reservado para un backend con privilegios. Hoy no lo implementa nadie. */
+    DIRECT,
 }

@@ -10,13 +10,19 @@ import dev.tty.core.command.CommandContext
 import dev.tty.core.command.CommandRegistry
 import dev.tty.core.command.DeviceInfo
 import dev.tty.core.command.Session
+import dev.tty.core.apps.AppKiller
 import dev.tty.core.command.builtin.AppsCommand
 import dev.tty.core.command.builtin.ClearCommand
 import dev.tty.core.command.builtin.HelpCommand
+import dev.tty.core.command.builtin.InfoCommand
+import dev.tty.core.command.builtin.KillCommand
 import dev.tty.core.command.builtin.OpenCommand
+import dev.tty.core.command.builtin.SettingsCommand
+import dev.tty.core.command.builtin.UninstallCommand
 import dev.tty.core.output.Line
 import dev.tty.core.scrollback.Scrollback
 import dev.tty.platform.apps.LauncherAppsCatalog
+import dev.tty.platform.apps.SystemDialogKiller
 import dev.tty.platform.store.ScrollbackStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +62,12 @@ class AppContainer(context: Context) {
     /** El mismo objeto es catálogo y acciones: las dos interfaces las sirve `LauncherApps`. */
     private val launcherApps = LauncherAppsCatalog(appContext, scope)
 
+    /**
+     * Detener una app. Hoy solo abre el diálogo del sistema; el hueco de un backend con
+     * privilegios (Shizuku) está aquí y en ningún otro sitio (architecture.md §4.4).
+     */
+    private val killer: AppKiller = SystemDialogKiller(launcherApps)
+
     /** Los números del banner (functional.md §11). */
     val device: DeviceInfo = DeviceInfoImpl(launcherApps, scrollback)
 
@@ -85,12 +97,18 @@ class AppContainer(context: Context) {
             AppsCommand,
             OpenCommand,
             ClearCommand,
+            // Fase 1
+            KillCommand,
+            UninstallCommand,
+            InfoCommand,
+            SettingsCommand,
         ),
     )
 
     private val commandContext = object : CommandContext {
         override val catalog: AppCatalog = launcherApps
         override val actions: AppActions = launcherApps
+        override val killer: AppKiller = this@AppContainer.killer
         override val session: Session = this@AppContainer.session
         override val device: DeviceInfo = this@AppContainer.device
         override val commands: List<Command> get() = registry.all
