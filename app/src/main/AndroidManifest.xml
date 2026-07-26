@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Visibilidad de paquetes (Android 11+). Un launcher NO necesita QUERY_ALL_PACKAGES, y no debe
+      pedirlo: no existe exención automática por ostentar ROLE_HOME, pero esta consulta cubre el
+      100% del caso. Sin ella, LauncherApps.getActivityList devuelve una lista vacía o recortada.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Fase 4 — Termux: <package android:name="com.termux" /> -->
+    </queries>
+
+    <!--
+      Fase 1 — <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+      Fase 2 — <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+               No es un runtime permission: se concede en una pantalla de Ajustes
+               (ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION con Uri "package:dev.tty") y el
+               estado se comprueba en onResume con Environment.isExternalStorageManager().
+               KILL_BACKGROUND_PROCESSES NO se declara: desde Android 14 no sirve para nada.
+      Fase 4 — <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
+    -->
+
+    <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.Tty">
+
+        <!--
+          Actividad HOME. Base: el manifest de AOSP Launcher3, con dos desviaciones deliberadas
+          (ver docs/architecture.md §3.1):
+            · adjustResize en vez de adjustPan — Launcher3 no usa insets de Compose; aquí el IME
+              tiene que reportar altura para que el historial la respete.
+            · configChanges ampliado con density|uiMode|fontScale — cambiar el tamaño de fuente no
+              debe recrear la actividad ni reiniciar la deriva del degradado.
+          NO se declara excludeFromRecents: una tarea HOME ya queda fuera de Recientes.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:clearTaskOnLaunch="true"
+            android:stateNotNeeded="true"
+            android:taskAffinity=""
+            android:resumeWhilePausing="true"
+            android:screenOrientation="unspecified"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="keyboard|keyboardHidden|mcc|mnc|navigation|orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode|fontScale">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!-- CATEGORY_DEFAULT es obligatoria: sin ella no se puede elegir como launcher. -->
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

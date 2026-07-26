@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Idioma del producto: inglés (functional.md §10). Este fichero contiene el nombre de la app y
+  nada más: la interfaz es texto generado por los comandos, no cadenas de recursos.
+-->
+<resources>
+    <string name="app_name">tty</string>
+</resources>

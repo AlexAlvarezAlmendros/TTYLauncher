@@ -19,9 +19,42 @@
 *.tar.gz
 *.rar
 
+# El wrapper de Gradle SÍ se versiona: es lo que garantiza que todo el mundo compile con la
+# misma versión de Gradle sin tenerla instalada.
+!gradle/wrapper/gradle-wrapper.jar
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
 
 # Kotlin Gradle plugin data, see https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
 .kotlin/
+
+# --- Android / Gradle ---
+*.iml
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Ruta del SDK: es local de cada máquina, nunca se versiona
+local.properties
+
+# Artefactos de build
+*.apk
+*.aab
+*.ap_
+*.dex
+output.json
+
+# Firma: nunca en el repo
+*.jks
+*.keystore
+
+# Android Studio / IntelliJ
+.idea/
+*.hprof
+
+# Perfiles de macrobenchmark generados
+/app/release/

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Las cinco paradas del degradado (functional.md §4.2) viven en Kotlin, en ui/theme/Palette.kt.
+  Aquí solo está la tinta, porque el sistema la necesita antes de que exista Compose:
+  es el color de la starting window (android:windowBackground), lo que hace que el launcher
+  aparezca instantáneamente en vez de con un flash blanco.
+
+  Regla crítica de la paleta: el degradado NUNCA alcanza el blanco.
+-->
+<resources>
+    <color name="ink">#FF07080B</color>
+</resources>

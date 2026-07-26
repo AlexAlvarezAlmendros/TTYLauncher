@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tema mínimo. No hay tema de Material a propósito: la UI entera es Compose sin MaterialTheme.
+  Lo único que hace este fichero es dar a la ventana el color de tinta, para que la starting
+  window del sistema sea ya el fondo del launcher (arranque sin flash blanco, §8.8 de
+  architecture.md). Nada de core-splashscreen en una actividad HOME: se relanzaría en cada
+  pulsación de HOME.
+
+  No se declaran statusBarColor ni navigationBarColor: con targetSdk 35+ son no-ops silenciosos.
+  El color de las barras sale del degradado de Compose.
+-->
+<resources>
+    <style name="Theme.Tty" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ink</item>
+    </style>
+</resources>

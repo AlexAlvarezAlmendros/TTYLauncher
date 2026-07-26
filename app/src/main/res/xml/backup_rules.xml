@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 e inferiores (API <= 30). Esquema raíz distinto e incompatible con
+  data_extraction_rules.xml.
+
+  Con android:allowBackup="false" el sistema no ejecuta copia en ninguna versión, así que en teoría
+  este fichero y su hermano no llegan a aplicarse. Se declaran igualmente como defensa en
+  profundidad: la documentación advierte de que en dispositivos de algunos fabricantes
+  allowBackup="false" desactiva la copia en la nube pero NO la transferencia entre dispositivos, y
+  ahí es donde la sección <device-transfer> del otro fichero hace su trabajo.
+
+  Si al verificar con `bmgr` se comprueba que sobra, se quitan los dos ficheros y sus dos atributos
+  del manifest — no se dejan a medias.
+-->
+<full-backup-content>
+    <exclude domain="root" path="." />
+</full-backup-content>
