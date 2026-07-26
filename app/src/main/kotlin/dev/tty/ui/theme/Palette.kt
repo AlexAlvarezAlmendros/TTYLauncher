@@ -66,4 +66,10 @@ object Palette {
      */
     const val DOT_UNLIT = 0.18f
     const val DOT_LIT = 1f
+
+    /**
+     * Suelo del parpadeo del cursor de bloque. Del `@keyframes tty-cursor` del design system: la
+     * opacidad va de 1 a 0.12 y vuelve, con curva suave — nunca encendido/apagado duro.
+     */
+    const val CURSOR_ALPHA_MIN = 0.12f
 }

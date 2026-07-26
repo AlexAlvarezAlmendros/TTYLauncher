@@ -1,0 +1,117 @@
+package dev.tty.ui
+
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import dev.tty.core.output.Line
+import dev.tty.core.scrollback.Scrollback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+
+/**
+ * El estado de la pantalla del terminal.
+ *
+ * **No es un `ViewModel`**: `androidx.lifecycle` no es una dependencia del proyecto y no va a serlo
+ * (architecture.md §9). Es una clase normal que la actividad crea una vez y conserva, con su propio
+ * `CoroutineScope`; la actividad la cierra con [close] en `onDestroy`. Con `configChanges` cubriendo
+ * rotación, densidad y `fontScale`, la actividad no se recrea y no hace falta nada más.
+ *
+ * Dos invariantes que este estado existe para garantizar:
+ *
+ *  1. **La entrada nunca se bloquea.** [submit] lanza y vuelve: se puede escribir y enviar el
+ *     comando siguiente mientras el anterior sigue corriendo (functional.md §4.7, architecture.md
+ *     §5.2). No hay flag que deshabilite el campo, y [busy] es solo información para el glifo
+ *     `BUSY`/`SHELL` de la Fase 5.
+ *  2. **El scrollback de `core/` es la única fuente de verdad.** [lines] es un espejo observable que
+ *     se resincroniza desde él. Eso es lo que hace que `clear` —que vacía el scrollback desde
+ *     dentro del propio comando— deje la pantalla correcta sin que la UI tenga que saber qué hace
+ *     cada verbo, y lo que hace que el recorte a 2000 líneas se refleje solo.
+ */
+class TerminalState(
+    /**
+     * Quien ejecuta de verdad. **No es el [dev.tty.core.TerminalEngine] a pelo**: es
+     * `AppContainer::submit`, que además persiste lo que el motor produce. Llamar al motor
+     * directamente desde aquí se llevaría por delante la persistencia sin que nada fallara — que es
+     * justo la clase de bug que no se ve hasta que reinicias el móvil y el historial no está.
+     */
+    private val submitter: suspend (String) -> Unit,
+    private val scrollback: Scrollback,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
+) {
+
+    /** Lo más reciente primero: el orden que espera la lista de Compose (architecture.md §8.1). */
+    private val _lines = mutableStateListOf<Line>()
+    val lines: List<Line> get() = _lines
+
+    private val running = mutableIntStateOf(0)
+
+    /** Si hay alguna ejecución viva. La Fase 5 lo lee para elegir el glifo; nadie bloquea con él. */
+    val busy: Boolean get() = running.intValue > 0
+
+    init {
+        sync()
+    }
+
+    /**
+     * Ejecuta una línea escrita en el prompt.
+     *
+     * Devuelve inmediatamente: el trabajo va en el scope propio, nunca en el hilo de la llamada más
+     * allá de lo que el comando tarde en suspenderse. Cada comando es responsable de irse a
+     * `Dispatchers.IO` si toca disco — un ANR en la actividad HOME es indistinguible de un móvil
+     * bloqueado.
+     */
+    fun submit(input: String) {
+        // Entrada vacía: no hace nada, no imprime, no da error (functional.md §5.3). El motor
+        // también lo garantiza; aquí se evita además una resincronización inútil por cada Intro.
+        if (input.isBlank()) return
+
+        running.intValue += 1
+        scope.launch {
+            try {
+                // Devuelve las líneas nuevas, de la más antigua a la más reciente, para que la
+                // Fase 5 sepa cuáles animar. Hoy no se usan: la lista se reconstruye desde el
+                // scrollback, que ya las contiene.
+                submitter(input)
+            } finally {
+                running.intValue -= 1
+                sync()
+            }
+        }
+
+        // El eco tiene que verse YA, no cuando el comando termine (functional.md §5.3). Con
+        // Dispatchers.Main.immediate `launch` no despacha si ya estamos en el hilo principal: el
+        // cuerpo corre hasta la primera suspensión real, y para entonces el motor ya ha metido el
+        // eco en el scrollback. Este segundo sync lo publica. Si el comando no suspendió, es un
+        // no-op porque el `finally` ya sincronizó.
+        sync()
+    }
+
+    /**
+     * Vuelve a publicar lo que haya en el scrollback.
+     *
+     * Lo llama quien lo modifique desde fuera de [submit]: la carga del historial persistido al
+     * arrancar (en `Dispatchers.IO`, y luego esto), el banner de primera ejecución y la
+     * implementación de `Session.clearScrollback`.
+     *
+     * **Desde el hilo principal.** La lectura del disco va en `Dispatchers.IO`, pero el volcado al
+     * espejo no: se hace en dos pasos y desde otro hilo podría verse el instante vacío de en medio.
+     */
+    fun refresh() {
+        sync()
+    }
+
+    /** Cancela el trabajo en curso. Se llama desde `onDestroy`. */
+    fun close() {
+        scope.cancel()
+    }
+
+    private fun sync() {
+        // Reconstruir la lista entera cuesta lo que copiar 2000 referencias, y a cambio no hay
+        // ninguna ruta por la que el espejo pueda divergir del scrollback. Las keys son los ids, así
+        // que Compose reutiliza los ítems y no se pierde la posición del scroll.
+        _lines.clear()
+        _lines.addAll(scrollback.lines)
+    }
+}
