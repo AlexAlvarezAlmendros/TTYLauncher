@@ -1,7 +1,6 @@
 package dev.tty.core.termux
 
 import dev.tty.core.command.builtin.ShCommand
-import dev.tty.core.command.builtin.TermuxException
 import dev.tty.core.command.builtin.TmuxCommand
 import dev.tty.core.command.Command
 import dev.tty.core.command.CommandContext
@@ -114,7 +113,7 @@ class TermuxTest {
     @Test
     fun `un binario que falta se distingue del resto`() {
         val fake = FakeTermux(
-            responses = mutableListOf(Result.failure(TermuxException(TermuxError.MissingBinary("tmux")))),
+            responses = mutableListOf(Result.failure(TermuxFailure(TermuxError.MissingBinary("tmux")))),
         )
         val out = run(TmuxCommand, "tmux build", ctx(fake))
         assertTrue(out.lines.first().first.contains("pkg install tmux"))

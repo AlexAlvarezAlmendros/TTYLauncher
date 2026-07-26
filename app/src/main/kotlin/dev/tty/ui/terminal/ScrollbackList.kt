@@ -11,7 +11,12 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import dev.tty.core.output.Reveal
+import dev.tty.ui.motion.isAnimated
+import dev.tty.ui.motion.rememberDecode
+import dev.tty.ui.motion.rememberSettle
 import dev.tty.core.output.Line
 import dev.tty.core.output.Role
 import dev.tty.ui.theme.Palette
@@ -35,6 +40,9 @@ import dev.tty.ui.theme.Type
  */
 @Composable
 fun ScrollbackList(
+    /** Cuántas líneas ya estaban al arrancar: esas no se animan (§5.2). */
+    restoredCount: Int = 0,
+    reducedMotion: Boolean = false,
     lines: List<Line>,
     listState: LazyListState,
     modifier: Modifier = Modifier,
@@ -61,7 +69,20 @@ fun ScrollbackList(
                 items = lines,
                 key = { _, line -> line.id },
             ) { index, line ->
-                ScrollbackLine(line = line, lineAlpha = fadeAlpha(index, fadeSpan))
+                // El modo de aparición lo decide `core/` a partir del ROL, nunca la UI: es lo
+                // que impide que alguien decida un día que `apps` quedaría bonito descifrándose.
+                val restored = lines.size - index <= restoredCount
+                val reveal = dev.tty.core.output.RevealPolicy.forLine(line, restored)
+
+                ScrollbackLine(
+                    line = line,
+                    lineAlpha = fadeAlpha(index, fadeSpan),
+                    reveal = reveal,
+                    // Solo se escalona lo que está arriba del todo: una línea que lleva ahí un rato
+                    // no tiene por qué volver a entrar cuando se recompone la lista.
+                    revealIndex = index,
+                    reducedMotion = reducedMotion,
+                )
             }
         }
     }
@@ -81,13 +102,35 @@ fun ScrollbackList(
 private fun ScrollbackLine(
     line: Line,
     lineAlpha: Float,
+    reveal: Reveal = Reveal.NONE,
+    revealIndex: Int = 0,
+    reducedMotion: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val base = styleFor(line.role)
-    BasicText(
+    val settleOffsetPx = with(androidx.compose.ui.platform.LocalDensity.current) {
+        dev.tty.ui.theme.Motion.SettleOffset.toPx()
+    }
+    val animate = reveal.isAnimated(reducedMotion)
+    val settle = rememberSettle(index = revealIndex, enabled = animate && reveal == Reveal.SETTLE)
+    val decoded = rememberDecode(
         text = line.render(),
-        modifier = modifier.fillMaxWidth(),
-        // El desvanecimiento va en el color y no en un graphicsLayer: evita una capa fuera de
+        enabled = animate && reveal == Reveal.DECODE,
+    )
+
+    BasicText(
+        text = decoded.value,
+        modifier = modifier
+            .fillMaxWidth()
+            // `settle`: opacidad 0→100% y un desplazamiento vertical de 4dp. Va en un graphicsLayer
+            // y no en el color porque hay que mover la línea, no solo atenuarla — y el progreso se
+            // lee DENTRO del lambda, que es lo que mantiene esto en la fase de dibujo.
+            .graphicsLayer {
+                val p = settle.value
+                alpha = p
+                translationY = (1f - p) * settleOffsetPx
+            },
+        // El desvanecimiento por antigüedad va en el color y no en la capa: evita una capa fuera de
         // pantalla por línea, y el color base siempre es opaco, así que sustituir el alfa es exacto.
         style = base.copy(color = base.color.copy(alpha = lineAlpha)),
     )

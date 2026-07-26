@@ -77,6 +77,15 @@ fun PromptRow(
      * teclear comandos.
      */
     symbol: String = PROMPT_SYMBOL,
+    /**
+     * El estado del glifo. **El glifo ocupa la celda donde iba el `>`** (§4.4): no es un icono junto
+     * al texto, es el carácter del prompt, animado.
+     *
+     * En grabación se pasa `null` y se enseña el `…` como carácter, porque `REC` ya informa del modo
+     * desde el propio glifo… y porque dos señales del mismo estado es una de más.
+     */
+    glyph: dev.tty.ui.glyph.GlyphState? = null,
+    reducedMotion: Boolean = false,
 ) {
     val focusRequester = remember { FocusRequester() }
     val windowInfo = LocalWindowInfo.current
@@ -137,7 +146,19 @@ fun PromptRow(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            BasicText(text = symbol, style = Type.BodyDim)
+            // El glifo ocupa la celda donde iba el `>` (§4.4): no es un icono junto al texto, es
+            // el carácter del prompt, animado. En grabación se enseña el `…` como carácter, porque
+            // `REC` ya informa del modo — dos señales del mismo estado es una de más.
+            if (glyph != null) {
+                dev.tty.ui.glyph.Glyph(
+                    state = glyph,
+                    cell = with(androidx.compose.ui.platform.LocalDensity.current) { advancePx.toDp() },
+                    color = Palette.TextDim,
+                    reducedMotion = reducedMotion,
+                )
+            } else {
+                BasicText(text = symbol, style = Type.BodyDim)
+            }
             Spacer(modifier = Modifier.width(Spacing.S2))
             BasicTextField(
                 state = state,

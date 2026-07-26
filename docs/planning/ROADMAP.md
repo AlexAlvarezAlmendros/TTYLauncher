@@ -30,7 +30,7 @@ Dos consecuencias que hay que respetar:
 | 2 | Ficheros | 🔒 Bloqueado | [02-ficheros.md](plans/02-ficheros.md) | `cd Download` y `ls` devuelven lo que hay en el teléfono, y nada puede tocar fuera de la raíz |
 | 3 | Scripts | 🔄 En curso | [03-scripts.md](plans/03-scripts.md) | `focus obsidian` ejecuta tres comandos con argumento posicional |
 | 4 | Termux | 🔄 En curso | [04-termux.md](plans/04-termux.md) | `tmux build -k "…"` devuelve la foto del pane con la tipografía de `tty` |
-| 5 | Sistema de movimiento | 🔒 Bloqueado | [05-movimiento.md](plans/05-movimiento.md) | Los seis glifos, `settle`/`decode` y las cinco microanimaciones, con movimiento reducido soportado |
+| 5 | Sistema de movimiento | 🔄 En curso | [05-movimiento.md](plans/05-movimiento.md) | Los seis glifos, `settle`/`decode` y las cinco microanimaciones, con movimiento reducido soportado |
 | 6 | Pulido | 🔒 Bloqueado | [06-pulido.md](plans/06-pulido.md) | Historial de entradas, banner real y sugerencia por distancia de edición |
 
 ## Foco actual

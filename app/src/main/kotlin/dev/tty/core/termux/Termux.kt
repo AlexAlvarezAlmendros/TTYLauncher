@@ -38,7 +38,9 @@ sealed interface TermuxError {
 
     /** Pasaron los 15 segundos sin respuesta. */
     data object Timeout : TermuxError {
-        override fun message(verb: String) = "$verb: termux: timed out after 15s"
+        // El límite sale de Limits, no de un literal: dos sitios se desincronizan.
+        override fun message(verb: String) =
+            "$verb: termux: no response in ${dev.tty.core.Limits.TERMUX_TIMEOUT_MS / 1000}s — still running there"
     }
 
     /** El binario no existe en Termux. `tmux` no viene instalado: hay que `pkg install tmux`. */
@@ -62,6 +64,8 @@ data class TermuxResult(
     val stdout: List<String>,
     val stderr: List<String>,
     val exitCode: Int?,
+    /** Termux recortó la salida a 100 KB. Se dice: recortar en silencio sería mentir. */
+    val truncated: Boolean = false,
 ) {
     val ok: Boolean get() = exitCode == null || exitCode == 0
 }
