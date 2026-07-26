@@ -11,6 +11,8 @@ import dev.tty.core.script.Budget
 import dev.tty.core.script.Recording
 import dev.tty.core.script.Script
 import dev.tty.core.script.ScriptRunner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * El ciclo completo de una entrada: eco → despacho → salida.
@@ -84,7 +86,16 @@ class TerminalEngine(
      * scripts anidados no puedan ejecutar 800 líneas entre todos respetando el límite cada uno.
      */
     private suspend fun dispatch(parsed: CommandLine, budget: Budget): Output {
-        registry[parsed.verb]?.let { return it.run(parsed, context).truncated() }
+        // **Todo comando sale del hilo principal.** Un `find` o un `du` sobre un árbol grande de
+        // /sdcard bloquearía la actividad HOME durante segundos, y un ANR ahí es indistinguible de
+        // un móvil bloqueado (§16). Va aquí y no en cada verbo para que no dependa de que quien
+        // escriba el siguiente se acuerde.
+        //
+        // `kotlinx.coroutines` no rompe la pureza de `core/`: no es `android.*`, y el test de la
+        // frontera lo comprueba.
+        registry[parsed.verb]?.let { command ->
+            return withContext(Dispatchers.IO) { command.run(parsed, context) }.truncated()
+        }
 
         val runner = scripts
         if (runner != null) {

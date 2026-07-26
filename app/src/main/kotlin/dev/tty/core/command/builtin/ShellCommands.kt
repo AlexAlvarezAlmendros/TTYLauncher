@@ -22,7 +22,7 @@ import dev.tty.core.termux.TermuxResult
 object ShCommand : Command {
     override val name = "sh"
     override val aliases = setOf("!")
-    override val syntax = "sh <línea>"
+    override val syntax = "sh <line>"
     override val summary = "run a line in termux"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -60,7 +60,7 @@ object ShCommand : Command {
 object TmuxCommand : Command {
     override val name = "tmux"
     override val aliases = setOf("t")
-    override val syntax = "tmux [sesión] [-n N] [-k teclas]"
+    override val syntax = "tmux [session] [-n N] [-k keys]"
     override val summary = "snapshot a tmux pane"
 
     private const val DEFAULT_SESSION = "tty"
