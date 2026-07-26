@@ -33,6 +33,9 @@ class TerminalEngine(
     private val scripts: ScriptRunner? = null,
 ) {
 
+    /** Las últimas ~50 líneas escritas (§5.4). Volátil a propósito: ver [InputHistory]. */
+    val history = InputHistory()
+
     /** El modo grabación, si está activo. Estado del motor, no del intérprete (§8.2). */
     var recording: Recording? = null
         private set
@@ -61,6 +64,10 @@ class TerminalEngine(
         recording?.let { return captureWhileRecording(trimmed, it) }
 
         val parsed = CommandLine.parse(input) ?: return emptyList()
+
+        // Se recuerda lo que se escribió, no lo que se ejecutó: si el comando falla, el usuario
+        // querrá recuperar exactamente su línea para corregirla.
+        history.remember(trimmed)
 
         val added = mutableListOf<Line>()
         added += scrollback.add(trimmed, Role.ECHO)

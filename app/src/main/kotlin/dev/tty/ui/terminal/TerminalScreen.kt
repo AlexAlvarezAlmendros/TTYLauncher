@@ -83,6 +83,7 @@ fun TerminalScreen(
                     )
                 },
                 reducedMotion = reducedMotion,
+                onHistory = { state.previousInput() },
             )
             ScrollbackList(
                 lines = lines,

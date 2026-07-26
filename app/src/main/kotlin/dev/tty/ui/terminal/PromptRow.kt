@@ -5,13 +5,18 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
@@ -22,7 +27,9 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +52,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import dev.tty.ui.theme.Motion
 import dev.tty.ui.theme.Palette
 import dev.tty.ui.theme.Spacing
@@ -86,6 +94,15 @@ fun PromptRow(
      */
     glyph: dev.tty.ui.glyph.GlyphState? = null,
     reducedMotion: Boolean = false,
+    /**
+     * El control del historial de entradas (§5.4): **un solo control táctil**, no dos. Recorre de
+     * más reciente a más antiguo y vuelve a empezar; no hay «atrás y adelante», porque un segundo
+     * control sería un segundo elemento tocable en un producto que tiene uno.
+     *
+     * Devuelve `null` cuando no hay nada que recorrer, y entonces no se dibuja: un control que no
+     * hace nada es ruido.
+     */
+    onHistory: (() -> String?)? = null,
 ) {
     val focusRequester = remember { FocusRequester() }
     val windowInfo = LocalWindowInfo.current
@@ -209,6 +226,22 @@ fun PromptRow(
                 cursorBrush = SolidColor(Color.Transparent),
                 scrollState = fieldScroll,
             )
+
+            // El control del historial, a la derecha del campo. Es el ÚNICO elemento tocable del
+            // producto, y su respuesta a la pulsación es un cambio de opacidad y nada más: nunca un
+            // color, nunca una escala, y desde luego ningún ripple (§4.8).
+            if (onHistory != null) {
+                Spacer(modifier = Modifier.width(Spacing.S2))
+                HistoryHandle(
+                    cell = with(LocalDensity.current) { advancePx.toDp() },
+                    onCycle = {
+                        val previous = onHistory()
+                        if (previous != null) {
+                            state.setTextAndPlaceCursorAtEnd(previous)
+                        }
+                    },
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(Spacing.S2))
@@ -267,3 +300,42 @@ private const val CURSOR_ALPHA_MIN = Palette.CURSOR_ALPHA_MIN
 
 /** Celdas de la cadena de medida. Cuantas más, menor el error de subpíxel al dividir. */
 private const val CELL_PROBE_LENGTH = 64
+
+
+/**
+ * El control del historial: un glifo atenuado, estático.
+ *
+ * **No es uno de los seis glifos de estado** de la §4.4 — no informa de nada, es una afordancia — y
+ * por eso está exento de la regla de «como máximo un glifo animado»: no se anima nunca. Se dibuja
+ * con la misma retícula 5×5 para que no desentone, tres puntos en diagonal descendente que sugieren
+ * «hacia atrás» sin ser una flecha, que sería iconografía figurativa.
+ */
+@Composable
+private fun HistoryHandle(cell: Dp, onCycle: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+
+    Canvas(
+        modifier = Modifier
+            .size(cell)
+            .clickable(
+                interactionSource = interaction,
+                // indication = null explícito: ni ripple ni el overlay por defecto de foundation.
+                indication = null,
+                onClick = onCycle,
+            ),
+    ) {
+        val step = size.width / 5f
+        val radius = step * 0.22f
+        // Tres puntos en diagonal: sugiere «hacia atrás» sin dibujar una flecha.
+        listOf(1 to 1, 2 to 2, 3 to 3).forEach { (row, col) ->
+            drawCircle(
+                color = Palette.TextDim,
+                radius = radius,
+                center = Offset(step * (col + 0.5f), step * (row + 0.5f)),
+                // La pulsación solo cambia la opacidad. Nada de color, nada de escala (§4.8).
+                alpha = if (pressed) 1f else Palette.FADE_MIN,
+            )
+        }
+    }
+}
