@@ -31,7 +31,7 @@ Dos consecuencias que hay que respetar:
 | 3 | Scripts | 🔄 En curso | [03-scripts.md](plans/03-scripts.md) | `focus obsidian` ejecuta tres comandos con argumento posicional |
 | 4 | Termux | 🔄 En curso | [04-termux.md](plans/04-termux.md) | `tmux build -k "…"` devuelve la foto del pane con la tipografía de `tty` |
 | 5 | Sistema de movimiento | 🔄 En curso | [05-movimiento.md](plans/05-movimiento.md) | Los seis glifos, `settle`/`decode` y las cinco microanimaciones, con movimiento reducido soportado |
-| 6 | Pulido | 🔒 Bloqueado | [06-pulido.md](plans/06-pulido.md) | Historial de entradas, banner real y sugerencia por distancia de edición |
+| 6 | Pulido | 🔄 En curso | [06-pulido.md](plans/06-pulido.md) | Historial de entradas, banner real y sugerencia por distancia de edición |
 
 ## Foco actual
 
@@ -127,6 +127,26 @@ uso: cuanto más variada es la salida, mejor se juzga si el movimiento envejece 
 - 2026-07-26 — **El motor de comandos no conoce Android.** `core/` es Kotlin puro y testeable en
   JVM; los efectos (abrir, matar, desinstalar, Termux) entran por interfaces implementadas en la
   capa `platform/`. Es lo que permite testear la resolución de apps y los scripts sin emulador.
+
+## Deuda conocida al cerrar las seis fases
+
+Salió de la revisión final del 2026-07-26, que leyó el proyecto entero contra la especificación.
+Está aquí y no escondida en un TODO porque **lo que no se anota, no se arregla**:
+
+- **Los glifos `OK` y `FAIL` no se dibujan.** `lineGlyph()` existe y no la llama nadie; el
+  scrollback sigue usando los prefijos `>` y `!` como caracteres. La §4.4 dice que el glifo los
+  sustituye. Cablearlo toca el contrato de salida, así que es trabajo con cabeza, no un parche.
+- **La caída al limpiar y el destello del eco** (`Motion.CLEAR_MS`, `Motion.ECHO_MS`) están
+  declaradas y sin consumidor, igual que el barrido de la línea del prompt. Son tres de las cinco
+  microanimaciones de la §4.6.
+- **`help` puede no caber en una pantalla** con 26 verbos: la fila más ancha ronda las 78 celdas.
+  Es el criterio 4, y no lo mide ningún test. `Columns.widthOf` existe justo para eso y no se usa.
+- **`Type.Label` no lo usa nadie**: el banner sale como cuerpo atenuado en vez de como etiqueta, así
+  que el producto tiene un solo tamaño tipográfico y no los dos de la §4.3.
+- **Los quince verbos de fichero no tienen tests propios.** `Cage` y `FileOps` sí; la costura entre
+  ambos —que `rm` llame a la jaula antes de borrar— no.
+- **El formato del scrollback en disco** (`encode`/`decode`/lectura tolerante) vive en `platform/` y
+  por eso ningún test lo cubre, pese a que el CLAUDE.md lo exige por escrito.
 
 ## Decisiones abiertas
 

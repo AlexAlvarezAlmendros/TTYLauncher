@@ -72,7 +72,10 @@ class MainActivity : ComponentActivity() {
             // descartan porque la lista se reconstruye desde el scrollback.
             submitter = { input -> container.submit(input) },
             scrollback = container.scrollback,
-        ).also { it.symbolProvider = { container.promptSymbol } }
+        ).also {
+            it.symbolProvider = { container.promptSymbol }
+            it.historyCycler = { container.cycleHistory() }
+        }
 
         // Se pinta primero y se carga después: el prompt tiene que estar listo antes de que el
         // teclado termine de subir (criterio 10). Con 2000 líneas en disco la diferencia se nota.

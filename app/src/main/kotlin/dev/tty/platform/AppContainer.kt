@@ -216,6 +216,9 @@ class AppContainer(context: Context) {
     /** `…` mientras se graba un script, `>` el resto del tiempo (functional.md §8.2). */
     val promptSymbol: String get() = engine.promptSymbol
 
+    /** El siguiente del historial de entradas, o `null` si no hay nada (§5.4). */
+    fun cycleHistory(): String? = engine.history.cycle()
+
     suspend fun restore(): List<Line> {
         scrollback.restore(store.load())
         // Los dos ejemplos de la primera ejecución. No pisan nada y se pueden borrar.

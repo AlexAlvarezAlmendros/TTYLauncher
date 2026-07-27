@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.provider.Settings
 import dev.tty.core.command.builtin.FileSystemAccess
@@ -53,7 +54,21 @@ class AndroidStorage(context: Context) : FileSystemAccess {
      * `MANAGE_EXTERNAL_STORAGE`. **No es un runtime permission**: no se pide con
      * `requestPermissions()`, se concede en una pantalla de Ajustes y se comprueba al volver.
      */
-    override fun hasStorageAccess(): Boolean = Environment.isExternalStorageManager()
+    override fun hasStorageAccess(): Boolean {
+        // `isExternalStorageManager()` es de API 30 y el `minSdk` es 26: llamarla sin guarda lanza
+        // un `NoSuchMethodError` en Android 8-10 — y eso es un `Error`, no una `RuntimeException`,
+        // así que nadie lo captura y se lleva por delante la actividad HOME.
+        //
+        // Por debajo de API 30 no existe el concepto: el acceso amplio se daba con
+        // READ/WRITE_EXTERNAL_STORAGE, que esta app no pide. Se responde `false`, y entonces todo
+        // verbo de fichero explica que no hay acceso — que es la verdad.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
+        return try {
+            Environment.isExternalStorageManager()
+        } catch (e: LinkageError) {
+            false
+        }
+    }
 
     /**
      * Abre la pantalla donde se concede.
@@ -63,6 +78,8 @@ class AndroidStorage(context: Context) : FileSystemAccess {
      * usuario con un comando que dice «run 'mount'» y un `mount` que no hace nada.
      */
     override fun requestStorageAccess(): Boolean {
+        // Misma guarda: la pantalla de «acceso a todos los ficheros» no existe antes de API 30.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
         val targeted = Intent(
             Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
             Uri.fromParts("package", appContext.packageName, null),

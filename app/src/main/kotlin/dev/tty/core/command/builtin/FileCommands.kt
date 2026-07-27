@@ -96,7 +96,7 @@ object PwdCommand : Command {
  */
 object CdCommand : Command {
     override val name = "cd"
-    override val syntax = "cd [ruta]"
+    override val syntax = "cd [path]"
     override val summary = "change directory; without arguments, go to the root"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -114,7 +114,7 @@ object CdCommand : Command {
 
 object LsCommand : Command {
     override val name = "ls"
-    override val syntax = "ls [-l] [-a] [ruta]"
+    override val syntax = "ls [-l] [-a] [path]"
     override val summary = "list a directory"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -153,7 +153,7 @@ object LsCommand : Command {
 
 object CatCommand : Command {
     override val name = "cat"
-    override val syntax = "cat <fichero>"
+    override val syntax = "cat <file>"
     override val summary = "print a text file"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -173,7 +173,7 @@ private class EndsCommand(
     override val name: String,
     private val fromTail: Boolean,
 ) : Command {
-    override val syntax = "$name [-n N] <fichero>"
+    override val syntax = "$name [-n N] <file>"
     override val summary = if (fromTail) "last lines of a file" else "first lines of a file"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -206,7 +206,7 @@ val TailCommand: Command = EndsCommand("tail", fromTail = true)
 
 object MkdirCommand : Command {
     override val name = "mkdir"
-    override val syntax = "mkdir [-p] <ruta>"
+    override val syntax = "mkdir [-p] <path>"
     override val summary = "create a directory"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -226,7 +226,7 @@ object MkdirCommand : Command {
 
 object TouchCommand : Command {
     override val name = "touch"
-    override val syntax = "touch <fichero>"
+    override val syntax = "touch <file>"
     override val summary = "create an empty file, or update its date"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -255,7 +255,7 @@ object TouchCommand : Command {
  */
 object RmCommand : Command {
     override val name = "rm"
-    override val syntax = "rm [-r] <ruta>"
+    override val syntax = "rm [-r] <path>"
     override val summary = "remove a file, or a directory with -r"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -291,7 +291,7 @@ private class TwoPathCommand(
     override val name: String,
     private val recursiveFlag: Boolean,
 ) : Command {
-    override val syntax = if (recursiveFlag) "$name [-r] <origen> <destino>" else "$name <origen> <destino>"
+    override val syntax = if (recursiveFlag) "$name [-r] <source> <destination>" else "$name <source> <destination>"
     override val summary = if (recursiveFlag) "copy a file, or a tree with -r" else "move or rename"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -376,7 +376,7 @@ object DfCommand : Command {
 
 object DuCommand : Command {
     override val name = "du"
-    override val syntax = "du [ruta]"
+    override val syntax = "du [path]"
     override val summary = "size of a tree"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
@@ -392,7 +392,7 @@ object DuCommand : Command {
 
 object FindCommand : Command {
     override val name = "find"
-    override val syntax = "find [ruta] <patrón>"
+    override val syntax = "find [path] <pattern>"
     override val summary = "find by name"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {

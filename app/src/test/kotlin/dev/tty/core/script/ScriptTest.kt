@@ -224,4 +224,118 @@ class ScriptTest {
             Recording.startedMessage("focus"),
         )
     }
+
+    // ------------------------------------------------------------------ el orden de resolución
+
+    @Test
+    fun `un script nunca puede sombrear un comando`() = runBlocking {
+        // §8.4. Si se permitiera, un script llamado `rm` sería la forma trivial de hacer que un
+        // verbo de confianza haga otra cosa. El motor mira el registro ANTES que los scripts, y
+        // hasta esta revisión esa rama no la ejecutaba ningún test.
+        val store = FakeStore(mutableMapOf("clear" to Script("clear", listOf("open a"))))
+        val h = engineWith(store)
+
+        val added = h.engine.submit("clear")
+
+        // Ganó el comando incorporado, no el script.
+        assertTrue(added.any { it.text == "builtin clear" })
+        assertTrue(added.none { it.text.contains("open a") })
+    }
+
+    @Test
+    fun `un verbo que no es comando se busca entre los scripts`() = runBlocking {
+        val store = FakeStore(mutableMapOf("focus" to Script("focus", listOf("say hola"))))
+        val h = engineWith(store)
+
+        val added = h.engine.submit("focus")
+        assertTrue(added.any { it.text == "said: hola" })
+    }
+
+    @Test
+    fun `los argumentos del prompt llegan al script`() = runBlocking {
+        val store = FakeStore(mutableMapOf("focus" to Script("focus", listOf("say \$1 y \$2"))))
+        val h = engineWith(store)
+
+        val added = h.engine.submit("focus uno dos")
+        assertTrue(added.any { it.text == "said: uno y dos" })
+    }
+
+    @Test
+    fun `un verbo que no es ni comando ni script da error`() = runBlocking {
+        val added = engineWith(FakeStore()).engine.submit("noexiste")
+        assertTrue(added.last().role == Role.ERROR)
+        assertTrue(added.last().text.contains("command not found"))
+    }
 }
+
+/** El motor con scripts enchufados: es la costura que no cubría ningún test. */
+private class EngineHarness(store: ScriptStore) {
+    val scrollback = dev.tty.core.scrollback.Scrollback()
+
+    private val builtins = listOf(
+        object : dev.tty.core.command.Command {
+            override val name = "clear"
+            override val syntax = "clear"
+            override val summary = "clear"
+            override suspend fun run(
+                line: dev.tty.core.parse.CommandLine,
+                ctx: dev.tty.core.command.CommandContext,
+            ) = Output.of("builtin clear")
+        },
+        object : dev.tty.core.command.Command {
+            override val name = "say"
+            override val syntax = "say"
+            override val summary = "say"
+            override suspend fun run(
+                line: dev.tty.core.parse.CommandLine,
+                ctx: dev.tty.core.command.CommandContext,
+            ) = Output.of("said: " + line.tokens.joinToString(" "))
+        },
+    )
+
+    private val registry = dev.tty.core.command.CommandRegistry(builtins)
+
+    private val context = object : dev.tty.core.command.CommandContext {
+        override val catalog = object : dev.tty.core.apps.AppCatalog {
+            override fun all() = emptyList<dev.tty.core.apps.AppEntry>()
+        }
+        override val actions = object : dev.tty.core.apps.AppActions {
+            override fun open(app: dev.tty.core.apps.AppEntry) = true
+            override fun requestUninstall(app: dev.tty.core.apps.AppEntry) = true
+            override fun openAppSettings(app: dev.tty.core.apps.AppEntry) = true
+            override fun openSystemSettings() = true
+        }
+        override val killer = object : dev.tty.core.apps.AppKiller {
+            override val mode = dev.tty.core.apps.KillMode.SYSTEM_DIALOG
+            override fun requestStop(app: dev.tty.core.apps.AppEntry) = true
+        }
+        override val files = object : dev.tty.core.command.builtin.FileSystemAccess {
+            override val cage = dev.tty.core.fs.Cage(java.nio.file.Files.createTempDirectory("tty-eng"))
+            override fun hasStorageAccess() = true
+            override fun requestStorageAccess() = true
+        }
+        override val scripts: ScriptStore = store
+        override val termux = object : dev.tty.core.termux.TermuxClient {
+            override suspend fun check() = dev.tty.core.termux.TermuxError.NotInstalled
+            override suspend fun run(path: String, args: List<String>) =
+                Result.success(dev.tty.core.termux.TermuxResult(emptyList(), emptyList(), 0))
+        }
+        override val session = object : dev.tty.core.command.Session {
+            override suspend fun clearScrollback() = Unit
+        }
+        override val device = object : dev.tty.core.command.DeviceInfo {
+            override val androidRelease = "16"
+            override val model = "pixel"
+            override fun appCount() = 0
+            override fun scrollbackLines() = 0
+        }
+        override val commands = registry.all
+        override fun isReservedName(name: String) = registry.isReserved(name)
+        override fun startRecording(name: String) = engine.startRecording(name)
+    }
+
+    val engine: dev.tty.core.TerminalEngine =
+        dev.tty.core.TerminalEngine(registry, scrollback, context, ScriptRunner(store))
+}
+
+private fun engineWith(store: ScriptStore) = EngineHarness(store)

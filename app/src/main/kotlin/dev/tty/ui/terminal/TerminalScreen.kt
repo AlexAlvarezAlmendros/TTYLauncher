@@ -72,17 +72,16 @@ fun TerminalScreen(
             PromptRow(
                 onSubmit = onSubmit,
                 symbol = state.promptSymbol,
-                // En grabación no hay glifo: el `…` como carácter ya dice en qué modo estás.
-                glyph = if (state.promptSymbol == "…") {
-                    null
-                } else {
-                    dev.tty.ui.glyph.promptGlyph(
-                        busy = state.busy,
-                        shell = state.shellBusy,
-                        recording = false,
-                    )
-                },
+                // El glifo informa SIEMPRE, incluida la grabación: la §4.4 dice que el `…` se
+                // mantiene como carácter de línea **porque** `REC` ya comunica el modo desde el
+                // prompt. Anular el glifo ahí dejaba el modo sin su señal.
+                glyph = dev.tty.ui.glyph.promptGlyph(
+                    busy = state.busy,
+                    shell = state.shellBusy,
+                    recording = state.promptSymbol == "…",
+                ),
                 reducedMotion = reducedMotion,
+                onHistory = { state.previousInput() },
             )
             ScrollbackList(
                 lines = lines,

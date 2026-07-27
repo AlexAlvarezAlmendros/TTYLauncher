@@ -20,7 +20,7 @@ import dev.tty.core.text.Columns
 object HelpCommand : Command {
     override val name = "help"
     override val aliases = setOf("?", "h")
-    override val syntax = "help [comando]"
+    override val syntax = "help [command]"
     override val summary = "list commands, or explain one"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {

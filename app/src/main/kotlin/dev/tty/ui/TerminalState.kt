@@ -55,6 +55,12 @@ class TerminalState(
     /** Cómo preguntarle al motor por el símbolo. Lo inyecta quien construye el estado. */
     var symbolProvider: () -> String = { ">" }
 
+    /** Cómo recorrer el historial de entradas. Lo inyecta quien construye el estado. */
+    var historyCycler: () -> String? = { null }
+
+    /** El siguiente del historial, o `null` si no hay nada que recorrer. */
+    fun previousInput(): String? = historyCycler()
+
     /** Si hay alguna ejecución viva. Lo lee el glifo del prompt; nadie bloquea con él. */
     val busy: Boolean get() = running.intValue > 0
 
