@@ -288,6 +288,9 @@ historial.
 
 - Al abrir el launcher, el campo tiene **foco automático** y el teclado aparece solo. Obligar a
   un toque previo rompe el modelo entero.
+- **Tocar en cualquier parte de la pantalla devuelve el foco al prompt** y saca el teclado. En un
+  terminal no hay nada más que tocar, así que el gesto no compite con nada — y si el teclado se
+  cierra (con el botón del sistema, o al volver de otra app), tocar es lo que cualquiera intenta.
 - Teclado sin autocorrección, sin mayúscula automática, con acción "Ir".
 - El historial persistido se muestra ya presente, sin animación de entrada. Solo lo que llega
   durante la sesión se anima.
@@ -526,6 +529,9 @@ error es el onboarding, igual que con Termux (§9.4).
 
 - Se admiten rutas absolutas (`/DCIM`), relativas (`fotos/2026`), `.`, `..` y `~` como sinónimo de
   la raíz.
+- **Omitir la ruta significa «aquí»**: `ls`, `du` y `find` sin argumento trabajan sobre el directorio
+  de trabajo. La única excepción es `cd`, que sin argumento vuelve a la raíz — es lo que hace
+  cualquier shell y es semántica suya, no de la resolución de rutas.
 - **No hay globbing.** `rm *.jpg` no borra nada: `*` no significa nada y el comando dirá que no
   encuentra un fichero llamado `*.jpg`. Es deliberado — un glob que el usuario no puede ver
   expandido antes de ejecutarlo es la forma más rápida de borrar lo que no querías.
@@ -535,6 +541,11 @@ error es el onboarding, igual que con Termux (§9.4).
 
 `ls` imprime una entrada por línea, los directorios con `/` al final, ordenado alfabéticamente con
 los directorios primero. Con `-l` añade modo, tamaño y fecha; con `-a` incluye los ocultos.
+
+Cuando una fila de dos columnas no cabe a lo ancho de la pantalla, **la continuación se alinea con la
+segunda columna**, no con el margen. Es solo presentación: el texto que se copia no cambia. Sin eso,
+la descripción de un comando en `help` aparecía pegada al margen justo encima de la fila siguiente y
+no se sabía qué pertenecía a qué.
 
 ```
 > ls Download

@@ -111,8 +111,15 @@ fun PromptRow(
      * hace nada es ruido.
      */
     onHistory: (() -> String?)? = null,
+    /**
+     * Se iza a la pantalla para que **tocar en cualquier parte devuelva el foco aquí**.
+     *
+     * En un terminal no hay dónde tocar salvo el prompt: si el teclado se cierra —con el botón del
+     * sistema, o al volver de otra app— el usuario se queda mirando una pantalla que no responde a
+     * lo que escribe. Tocar es el gesto obvio para recuperarlo, y el único que hay.
+     */
+    focusRequester: FocusRequester = remember { FocusRequester() },
 ) {
-    val focusRequester = remember { FocusRequester() }
     val windowInfo = LocalWindowInfo.current
 
     // Foco automático (architecture.md §8.2). El fallo clásico de «a veces no sale el teclado» no es

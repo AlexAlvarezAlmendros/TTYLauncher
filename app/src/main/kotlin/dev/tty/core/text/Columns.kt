@@ -35,4 +35,36 @@ object Columns {
     /** El ancho que ocuparía la primera columna. Útil para decidir si `help` cabe en pantalla. */
     fun widthOf(rows: List<Pair<String, String>>): Int =
         rows.maxOfOrNull { it.first.length } ?: 0
+
+    /**
+     * Dónde debe continuar una línea que no cabe a lo ancho, en celdas de carácter.
+     *
+     * En una pantalla de móvil una fila de dos columnas se parte, y por defecto la continuación
+     * vuelve a la columna 0: el resultado es que la descripción de un comando aparece pegada al
+     * margen, justo debajo de la sintaxis del siguiente, y `help` se vuelve ilegible. Lo mismo con
+     * el paquete de `apps`.
+     *
+     * La continuación se alinea con **el punto donde empieza la segunda columna**, que es lo que
+     * hay justo después del primer hueco de dos o más espacios — el que [twoColumns] acaba de
+     * meter. Una línea de prosa normal no tiene ese hueco y no se sangra.
+     *
+     * **Es solo de presentación.** El texto no cambia: sigue siendo el mismo que se copia y el
+     * mismo que se persiste. Por eso se calcula al pintar y no se guarda en la línea.
+     *
+     * Se topa en [MAX_HANGING] porque una primera columna desproporcionada dejaría la continuación
+     * tan a la derecha que no cabría nada — y entonces el remedio sería peor.
+     */
+    fun hangingIndent(text: String): Int {
+        val gap = text.indexOf("  ")
+        if (gap < 0) return 0
+
+        var i = gap
+        while (i < text.length && text[i] == ' ') i++
+        // Un hueco que llega al final es una línea rellena de espacios, no dos columnas.
+        if (i >= text.length) return 0
+        return i.coerceAtMost(MAX_HANGING)
+    }
+
+    /** Tope del sangrado. Más allá, la continuación no tendría sitio para nada. */
+    const val MAX_HANGING = 24
 }
