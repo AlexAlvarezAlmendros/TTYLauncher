@@ -59,20 +59,37 @@ Excepción: ediciones de solo documentación/planificación pueden ir directas a
 
 ## Estado del repositorio
 
-La Fase 0 está implementada, **compila y sus 107 tests pasan**. El toolchain está instalado en esta
-máquina bajo `$HOME` (sin `sudo`) y exportado en `~/.zshrc`:
+Las seis fases están implementadas, **compilan y sus 307 tests pasan**. El toolchain está instalado
+en esta máquina bajo `$HOME` (sin `sudo`) y exportado en `~/.zshrc`:
 
 ```
 JAVA_HOME      ~/.local/opt/jdk17          Temurin 17.0.20
 ANDROID_HOME   ~/Android/Sdk               platform-tools · platforms;android-37.0 · build-tools;37.0.0
 Gradle          por wrapper (9.6.1)        ~/.local/opt/gradle-9.6.1 solo se usó para generarlo
+emulador       ~/Android/Sdk/emulator      AVD `ttytest` · system-images;android-36;google_apis;x86_64
 ```
 
 `local.properties` (con `sdk.dir`) es local de la máquina y está en `.gitignore`: no se versiona.
 
-> Lo que sigue **sin verificar** es todo lo que necesita una pantalla: que el teclado salga solo,
-> que el prompt no se mueva, que el catálogo se refresque al instalar una app. No hay ningún
-> dispositivo conectado por `adb`. No afirmes que algo funciona en el móvil sin haberlo visto.
+**Cómo arrancar el emulador y ver qué pasa de verdad:**
+
+```bash
+$ANDROID_HOME/emulator/emulator -avd ttytest -no-window -no-audio -gpu swiftshader_indirect &
+adb wait-for-device && adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n dev.tty.debug/dev.tty.MainActivity
+adb logcat -b crash -d              # el trace, si murió
+adb exec-out screencap -p > /tmp/x.png
+```
+
+> El emulador cubre lo que se puede simular: que arranque sin morirse, que los comandos respondan,
+> que la pantalla se pinte. **No cubre** que el catálogo se refresque al instalar una app de verdad,
+> ni Termux, ni cómo se siente el movimiento en un panel real. Para eso sigue haciendo falta el
+> teléfono. No afirmes que algo funciona en el móvil sin haberlo visto en el móvil.
+>
+> **Un crash de arranque en la actividad HOME deja el teléfono sin pantalla de inicio.** Antes de
+> dar por buena una PR que toque `MainActivity`, `AppContainer`, `TerminalState` o la UI, arráncala
+> en el emulador. Pasó exactamente eso: seis fases en verde y la app muriendo en el 100% de los
+> arranques por una propiedad declarada después del `init` que la leía.
 
 ```
 app/src/main/kotlin/dev/tty/
@@ -302,6 +319,10 @@ La interfaz es texto: escribirlo mal es un bug de UI.
 - Sustitución posicional, límites de script, recursión que termina en error.
 - Recorte del scrollback, lectura tolerante a la última línea truncada, saneado de nombres.
 - Un test que falle si aparece un `import android.` dentro de `core/`.
+- **`TerminalState`, aunque viva en `ui/`.** No es un composable: es una clase de Kotlin normal que
+  la actividad construye en `onCreate`. «No se testean composables» **no** la exime, y creerlo costó
+  un crash de arranque al 100% de los lanzamientos. Si una clase de `ui/` no lleva `@Composable`,
+  se testea.
 
 No se testean composables uno a uno: el valor está en el motor. Lo visual se juzga mirándolo en el
 dispositivo real, que es también donde se prueba lo que no se puede simular (que el teclado salga
