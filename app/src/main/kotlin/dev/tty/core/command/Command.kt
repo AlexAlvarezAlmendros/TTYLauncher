@@ -59,6 +59,9 @@ interface CommandContext {
     /** Los scripts guardados. */
     val scripts: dev.tty.core.script.ScriptStore
 
+    /** La puerta a Termux: la única escotilla del vocabulario, y explícita. */
+    val termux: dev.tty.core.termux.TermuxClient
+
     /**
      * Si un nombre ya está cogido por un comando. Lo consulta `script new` para rechazarlo: un
      * script nunca puede sombrear un verbo del vocabulario (functional.md §8.4).

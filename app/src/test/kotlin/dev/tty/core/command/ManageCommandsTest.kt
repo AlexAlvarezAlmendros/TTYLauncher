@@ -81,6 +81,11 @@ class ManageCommandsTest {
             override suspend fun delete(name: String) = false
             override suspend fun seedExamples() = Unit
         }
+        override val termux = object : dev.tty.core.termux.TermuxClient {
+            override suspend fun check() = dev.tty.core.termux.TermuxError.NotInstalled
+            override suspend fun run(path: String, args: List<String>) =
+                Result.success(dev.tty.core.termux.TermuxResult(emptyList(), emptyList(), 0))
+        }
         override fun isReservedName(name: String) = false
         override fun startRecording(name: String) = Unit
     }

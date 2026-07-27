@@ -12,6 +12,13 @@ data class CommandLine(
     val verb: String,
     /** Todo lo demás, ya sin comillas. */
     val tokens: List<String>,
+    /**
+     * La línea tal y como se escribió, sin tocar.
+     *
+     * La necesita `sh`: el parser quita las comillas, y bash las necesita ver. `sh echo "hola
+     * mundo"` tiene que llegar a Termux con sus comillas puestas, o serían dos argumentos.
+     */
+    val raw: String = "",
 ) {
     companion object {
 
@@ -26,7 +33,7 @@ data class CommandLine(
             // Se trata como entrada vacía en lugar de despachar un comando sin nombre, que daría
             // el error `: command not found` — inútil y feo.
             if (verb.isNullOrEmpty()) return null
-            return CommandLine(verb, tokens.drop(1))
+            return CommandLine(verb, tokens.drop(1), input.trim())
         }
 
         /**
