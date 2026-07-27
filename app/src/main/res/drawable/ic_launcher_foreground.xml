@@ -1,14 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Un único punto centrado, acromático. El área segura de un adaptive icon es el 66% central de
-  los 108dp, así que el punto va holgadamente dentro.
+  El glifo READY: la matriz de puntos 5×5 con la cara (functional.md §4.4).
+
+  Es literalmente el mismo glifo que late en el prompt, con la misma geometría: paso de rejilla
+  uniforme y radio de punto = 0.34 del paso, el `DOT_RATIO` de `ui/glyph/Glyph.kt`. Si esa constante
+  cambia, este fichero se queda desincronizado — que es exactamente lo que le pasó al icono
+  anterior, un punto central suelto que era el READY de antes de que READY fuese una cara.
+
+  **La rejilla se dibuja entera**, como en la app: los 20 puntos apagados al 18% y los 5 encendidos
+  al 100%. Sin los apagados esto sería un icono figurativo; con ellos es una matriz de puntos que
+  resulta que dibuja una cara, que es la única forma en que la §4.8 lo tolera.
+
+  Geometría: paso 10dp, radio 3.4dp, centros en 34, 44, 54, 64, 74.
+  El punto de esquina queda a 31.7dp del centro, dentro de la máscara circular de 33dp que es
+  el peor recorte que aplica un lanzador.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Los apagados. Reposan al 18%: un píxel apagado sigue viéndose en una matriz real. -->
     <path
-        android:fillColor="#FFD7DBE2"
-        android:pathData="M54,54 m-9,0 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0" />
+        android:fillColor="#FFE4E6E9"
+        android:fillAlpha="0.18"
+        android:pathData="M34,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0" />
+
+    <!-- Los encendidos: dos ojos y una boca. -->
+    <path
+        android:fillColor="#FFE4E6E9"
+        android:pathData="M44,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0" />
 </vector>

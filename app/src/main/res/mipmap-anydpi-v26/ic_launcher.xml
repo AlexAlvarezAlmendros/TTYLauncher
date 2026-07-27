@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   minSdk es 26, así que este adaptive icon cubre todos los dispositivos y no hacen falta PNG.
-  Sin iconografía figurativa (§4.8): un punto de la matriz sobre tinta. Es el glifo READY.
+
+  El icono es **el glifo READY**: la misma matriz de puntos 5×5 que late en el prompt, sobre tinta.
+  No es una ilustración de la app, es la app — lo primero que ves en el cajón es exactamente lo
+  primero que ves al abrirla.
+
+  Eso obliga a mantenerlos sincronizados: cuando READY dejó de ser un punto central y pasó a ser una
+  cara, este icono se quedó atrás enseñando el glifo antiguo. Si READY vuelve a cambiar, cambia aquí.
+
+  `monochrome` reutiliza el mismo dibujo: los iconos temáticos de Android 13+ lo tiñen entero, y la
+  matriz sobrevive al tinte porque su jerarquía está en la opacidad (18% / 100%), no en el color.
 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ink" />
