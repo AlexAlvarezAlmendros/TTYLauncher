@@ -267,4 +267,27 @@ class FileOpsTest {
         assertEquals("1.0M", FileOps.humanBytes(1024L * 1024))
         assertEquals("2.0G", FileOps.humanBytes(2L * 1024 * 1024 * 1024))
     }
+
+    @Test
+    fun `copiar un directorio dentro de si mismo se rechaza en vez de colgarse`() {
+        // `cp -r . copia` haría que walkFileTree fuera encontrando lo que la propia copia crea:
+        // no termina nunca, y colgar la pantalla de inicio es un móvil inutilizable.
+        Files.createDirectory(dir.resolve("origen"))
+        Files.writeString(dir.resolve("origen/a.txt"), "x")
+
+        val r = FileOps.copy(dir.resolve("origen"), dir.resolve("origen/copia"), recursive = true)
+
+        assertTrue(r is FsResult.Failure)
+        assertFalse(Files.exists(dir.resolve("origen/copia")))
+    }
+
+    @Test
+    fun `copiar a un hermano si funciona`() {
+        // La guarda anterior no puede pasarse de celosa: copiar al lado es el caso normal.
+        Files.createDirectory(dir.resolve("origen"))
+        Files.writeString(dir.resolve("origen/a.txt"), "x")
+
+        assertEquals(1, FileOps.copy(dir.resolve("origen"), dir.resolve("destino"), recursive = true).getOrNull())
+        assertTrue(Files.exists(dir.resolve("destino/a.txt")))
+    }
 }

@@ -41,10 +41,10 @@ el principio 7.
 | 5.7 | `BUSY` — columna barriendo de izquierda a derecha, bucle 600ms | ✅ Hecho | Sustituye a cualquier spinner (§4.8) |
 | 5.8 | `SHELL` — cascada de filas de arriba abajo, bucle 900ms | ✅ Hecho | Solo durante ejecución en Termux |
 | 5.9 | `REC` — punto central pulsando, 800ms | ✅ Hecho | Modo grabación |
-| 5.10 | `OK` — convergencia a diagonal ascendente y atenuado, 400ms, una vez | 🔄 En curso | Solo en comandos completados **con salida** |
-| 5.11 | `FAIL` — X con vibración única de 300ms, luego estático | 🔄 En curso | Sin rojo. El color es el de la línea |
+| 5.10 | `OK` — convergencia a diagonal ascendente y atenuado, 400ms, una vez | ✅ Hecho | Solo en comandos completados **con salida** |
+| 5.11 | `FAIL` — X con vibración única de 300ms, luego estático | ✅ Hecho | Sin rojo. El color es el de la línea |
 | 5.12 | **Como máximo un glifo animado en pantalla**: los del historial quedan congelados en su fotograma final | ✅ Hecho | Criterio 14. Sin esta regla, el historial es una discoteca |
-| 5.13 | El glifo **sustituye** a los prefijos `>` y `!` que la 0.16b ya imprime; el `…` de grabación se mantiene como carácter | 🔄 En curso | §4.4. `REC` ya informa del modo en el prompt |
+| 5.13 | El glifo **sustituye** a los prefijos `>` y `!` que la 0.16b ya imprime; el `…` de grabación se mantiene como carácter | ✅ Hecho | §4.4. `REC` ya informa del modo en el prompt |
 | 5.13b | Glifo del control del historial de entradas: atenuado, **estático**, exento de la regla de la 5.12 por no informar de un estado | 🔄 En curso | §5.4. Es el séptimo glifo y no está en la tabla cerrada de la §4.4: si no convence, la 6.2 lo resuelve con un carácter de la retícula |
 
 ### Aparición de texto
@@ -61,10 +61,10 @@ el principio 7.
 | # | Tarea | Estado | Notas |
 |---|-------|--------|-------|
 | 5.18 | Cursor de bloque con parpadeo de curva suave, 1.06s | ✅ Hecho | Ya existe desde 0.13; aquí se refina la curva |
-| 5.19 | Eco de entrada: destello de 80ms al 60% antes de asentarse en atenuado | 🔄 En curso | Confirma el envío sin imprimir nada |
-| 5.20 | Barrido de luz en la línea del prompt, una vez por ejecución | 🔄 En curso | Es el "enter" hecho visible |
+| 5.19 | Eco de entrada: destello de 80ms al 60% antes de asentarse en atenuado | ✅ Hecho | Confirma el envío sin imprimir nada |
+| 5.20 | Barrido de luz en la línea del prompt, una vez por ejecución | ✅ Hecho | Es el "enter" hecho visible |
 | 5.21 | Deriva del degradado: paradas ±2% cíclicas cada 20s | ✅ Hecho | Única animación ambiental; exenta del techo de 500ms |
-| 5.22 | Caída al limpiar: `clear` deja caer y desvanecer el historial en 120ms | 🔄 En curso | No desaparece de golpe |
+| 5.22 | Caída al limpiar: `clear` deja caer y desvanecer el historial en 120ms | ✅ Hecho | No desaparece de golpe |
 
 ### Cierre de la fase
 
@@ -96,4 +96,4 @@ configurable).
 |-------|-------|-------|
 | 2026-07-26 | — | Plan creado. Bloqueado por la Fase 0 (y se recomienda tener 1–4 en uso antes de calibrar). |
 | 2026-07-26 | 5.1-5.9 · 5.12 · 5.14-5.18 · 5.21 · 5.23 | **El sistema de movimiento.** `ui/glyph/Glyph` dibuja la rejilla 5×5 entera —apagados al 18%, encendidos al 100%— con los seis estados; la gramática (`intensity`) se separó del dibujo para poder razonarla sin Compose delante. `ui/motion/`: `settle` y `decode`, y `rememberReducedMotion`, que lee **`ValueAnimator.areAnimatorsEnabled()` además del `ContentObserver`** porque el Ahorro de batería desactiva los animadores sin tocar el ajuste. La elección entre `settle` y `decode` vive en `core/output/RevealPolicy`, a partir del **rol** de la línea: es lo que impide que alguien decida un día que `apps` quedaría bonito descifrándose. Deriva del degradado cuantizada a ~10 Hz para no reasignar un `Shader` por frame. 7 tests nuevos. |
-| 2026-07-26 | 5.10 · 5.11 · 5.13 · 5.22 | **Devueltas a «en curso»: estaban marcadas hechas y no lo estaban.** Lo pilló la revisión final del proyecto. `lineGlyph()` está escrita pero **no la llama nadie**: en el scrollback siguen saliendo los prefijos `>` y `!` como caracteres, así que `OK` y `FAIL` no se dibujan jamás y la sustitución de prefijos de la §4.4 no ha ocurrido. Y `Motion.CLEAR_MS` no lo consume nadie: `clear` vacía la pantalla de golpe en un frame, que es justo lo que la §4.6.5 quiere evitar porque no distingue «se borró» de «falló al cargar». Cablearlas toca el contrato de salida (el rol tendría que dejar de aportar el prefijo), así que no se hace de cualquier manera al final de una sesión. |
+| 2026-07-26 | 5.10 · 5.11 · 5.13 · 5.19 · 5.20 · 5.22 | **Cerradas de verdad.** `Line` lleva glifo, el scrollback lo pinta congelado en la celda del prefijo, y las tres microanimaciones que faltaban están implementadas. Antes se habían dado por hechas sin estarlo: **Devueltas a «en curso»: estaban marcadas hechas y no lo estaban.** Lo pilló la revisión final del proyecto. `lineGlyph()` está escrita pero **no la llama nadie**: en el scrollback siguen saliendo los prefijos `>` y `!` como caracteres, así que `OK` y `FAIL` no se dibujan jamás y la sustitución de prefijos de la §4.4 no ha ocurrido. Y `Motion.CLEAR_MS` no lo consume nadie: `clear` vacía la pantalla de golpe en un frame, que es justo lo que la §4.6.5 quiere evitar porque no distingue «se borró» de «falló al cargar». Cablearlas toca el contrato de salida (el rol tendría que dejar de aportar el prefijo), así que no se hace de cualquier manera al final de una sesión. |

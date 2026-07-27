@@ -51,7 +51,7 @@ object KillCommand : Command {
     override val name = "kill"
     override val aliases = setOf("stop")
     override val syntax = "kill <app>"
-    override val summary = "open the force-stop dialog for an app"
+    override val summary = "force-stop dialog"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output =
         withApp(name, line, ctx, hint = "try 'apps'") { app ->
@@ -83,7 +83,7 @@ object KillCommand : Command {
 object UninstallCommand : Command {
     override val name = "uninstall"
     override val syntax = "uninstall <app>"
-    override val summary = "open the uninstall dialog for an app"
+    override val summary = "uninstall dialog"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output =
         withApp(name, line, ctx, hint = "try 'apps'") { app ->
@@ -105,7 +105,7 @@ object UninstallCommand : Command {
 object InfoCommand : Command {
     override val name = "info"
     override val syntax = "info <app> [-o]"
-    override val summary = "show package details, or open its settings with -o"
+    override val summary = "package details"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val flags = Flags.parse(line.tokens, known = setOf('o'))
@@ -147,7 +147,7 @@ object InfoCommand : Command {
 object SettingsCommand : Command {
     override val name = "settings"
     override val syntax = "settings"
-    override val summary = "open android settings"
+    override val summary = "android settings"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output =
         if (ctx.actions.openSystemSettings()) {

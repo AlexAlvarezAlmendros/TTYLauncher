@@ -81,6 +81,7 @@ fun TerminalScreen(
                     recording = state.promptSymbol == "…",
                 ),
                 reducedMotion = reducedMotion,
+                sweepKey = state.executions,
                 onHistory = { state.previousInput() },
             )
             ScrollbackList(
@@ -88,6 +89,7 @@ fun TerminalScreen(
                 listState = listState,
                 restoredCount = state.restoredCount,
                 reducedMotion = reducedMotion,
+                falling = state.falling,
                 modifier = Modifier.weight(1f),
             )
         }

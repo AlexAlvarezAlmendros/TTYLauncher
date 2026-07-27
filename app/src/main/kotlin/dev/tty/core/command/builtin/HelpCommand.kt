@@ -21,7 +21,7 @@ object HelpCommand : Command {
     override val name = "help"
     override val aliases = setOf("?", "h")
     override val syntax = "help [command]"
-    override val summary = "list commands, or explain one"
+    override val summary = "list commands"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val target = line.tokens.firstOrNull()?.lowercase()

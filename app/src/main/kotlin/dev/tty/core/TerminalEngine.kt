@@ -3,6 +3,7 @@ package dev.tty.core
 import dev.tty.core.command.CommandContext
 import dev.tty.core.command.CommandRegistry
 import dev.tty.core.output.Line
+import dev.tty.core.output.LineGlyph
 import dev.tty.core.output.Output
 import dev.tty.core.output.Role
 import dev.tty.core.parse.CommandLine
@@ -72,10 +73,32 @@ class TerminalEngine(
         history.remember(trimmed)
 
         val added = mutableListOf<Line>()
-        added += scrollback.add(trimmed, Role.ECHO)
+        val echo = scrollback.add(trimmed, Role.ECHO)
+        added += echo
 
         val output = runSafely(parsed.verb) { dispatch(parsed, Budget()) }
-        for ((text, role) in output.lines) added += scrollback.add(text, role)
+
+        // El glifo del eco se decide DESPUÉS, porque es el resultado de su propio comando: `OK` si
+        // dejó salida, `FAIL` si falló, y ninguno si el éxito fue silencioso —`open` no imprime
+        // nada, y adornarlo con un glifo sería ruido (§10).
+        val glyph = when {
+            output.failed -> LineGlyph.FAIL
+            output.lines.isNotEmpty() -> LineGlyph.OK
+            else -> null
+        }
+        if (glyph != null) {
+            scrollback.setGlyph(echo.id, glyph)
+            // Y también en la lista que se devuelve: es la que `AppContainer` persiste. Actualizar
+            // solo el scrollback dejaba el glifo fuera del disco, y al reiniciar el historial
+            // parecía que todo había ido bien.
+            added[0] = echo.copy(glyph = glyph)
+        }
+
+        for ((text, role) in output.lines) {
+            // Cada línea de error lleva el suyo: al recorrer el historial se ve dónde falló sin
+            // tener que leer el texto.
+            added += scrollback.add(text, role, if (role == Role.ERROR) LineGlyph.FAIL else null)
+        }
         return added
     }
 

@@ -18,7 +18,7 @@ import dev.tty.core.text.Columns
 object AppsCommand : Command {
     override val name = "apps"
     override val syntax = "apps [-s] [filter]"
-    override val summary = "list installed apps"
+    override val summary = "list apps"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         val flags = Flags.parse(line.tokens, known = setOf('s'))

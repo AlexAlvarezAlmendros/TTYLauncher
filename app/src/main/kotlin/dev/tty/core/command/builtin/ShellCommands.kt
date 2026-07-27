@@ -23,7 +23,7 @@ object ShCommand : Command {
     override val name = "sh"
     override val aliases = setOf("!")
     override val syntax = "sh <line>"
-    override val summary = "run a line in termux"
+    override val summary = "run in termux"
 
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         // Se reconstruye desde la entrada cruda, no desde los tokens: el parser quitó las comillas
@@ -61,7 +61,7 @@ object TmuxCommand : Command {
     override val name = "tmux"
     override val aliases = setOf("t")
     override val syntax = "tmux [session] [-n N] [-k keys]"
-    override val summary = "snapshot a tmux pane"
+    override val summary = "read a pane"
 
     private const val DEFAULT_SESSION = "tty"
     private const val DEFAULT_LINES = 40
