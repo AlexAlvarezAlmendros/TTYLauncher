@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -151,7 +152,16 @@ private fun ScrollbackLine(
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val glyphCell = remember(measurer, density.density, density.fontScale) {
-        with(density) { (measurer.measure("M".repeat(64), Type.Body).size.width / 64f).toDp() }
+        with(density) {
+            (measurer.measure("M".repeat(64), Type.Body).size.width / 64f * Spacing.GLYPH_CELLS).toDp()
+        }
+    }
+
+    // La altura de la primera línea de texto. El glifo se centra contra ella, no contra el bloque
+    // entero: en una línea que ocupa tres renglones, centrarlo sobre el bloque lo dejaría flotando
+    // a media altura, lejos del renglón al que pertenece.
+    val lineBox = remember(density.density, density.fontScale) {
+        with(density) { Type.Body.lineHeight.toDp() }
     }
 
     // El avance de celda en sp, que es la unidad que entiende TextIndent. Se mide sobre una cadena
@@ -176,7 +186,13 @@ private fun ScrollbackLine(
         // La celda del prefijo: el glifo la ocupa cuando lo hay (§4.4), y cuando no, se reserva
         // igual para que el texto de todas las líneas quede alineado. Sin la reserva, un eco con
         // glifo y una salida sin él empezarían en columnas distintas.
-        Box(modifier = Modifier.width(glyphCell + Spacing.S1)) {
+        Box(
+            modifier = Modifier.width(glyphCell + Spacing.S1).height(lineBox),
+            // Centrado VERTICAL contra el renglón, pegado a la izquierda en horizontal. Antes el
+            // glifo colgaba del borde superior de la caja de línea mientras la letra se apoya en su
+            // base, así que quedaba visiblemente más alto que el texto al que acompaña.
+            contentAlignment = Alignment.CenterStart,
+        ) {
             val g = line.glyph
             if (g != null) {
                 Glyph(
