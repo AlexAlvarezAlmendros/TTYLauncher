@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.Modifier
 import dev.tty.ui.TerminalState
 import dev.tty.ui.theme.Spacing
@@ -38,6 +42,10 @@ fun TerminalScreen(
     val lines = state.lines
     val reducedMotion = dev.tty.ui.motion.rememberReducedMotion().value
 
+    // El foco vive aquí, no dentro del prompt, porque tocar en cualquier parte tiene que devolverlo.
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+
     val onSubmit: (String) -> Unit = remember(state, listState) {
         { input: String ->
             state.submit(input)
@@ -57,7 +65,23 @@ fun TerminalScreen(
         if (headId != null) listState.requestScrollToItem(0)
     }
 
-    TerminalSurface(reducedMotion = reducedMotion, modifier = modifier) {
+    TerminalSurface(
+        reducedMotion = reducedMotion,
+        modifier = modifier
+            // Tocar en cualquier sitio devuelve el foco al prompt y saca el teclado. En un terminal
+            // no hay nada más que tocar, así que el gesto no compite con nada.
+            //
+            // `indication = null` explícito: ni ripple ni el overlay por defecto de foundation
+            // (§4.8). Un destello de Material a pantalla completa sería la peor forma de romper el
+            // producto.
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) {
+                runCatching { focusRequester.requestFocus() }
+                keyboard?.show()
+            },
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,6 +106,7 @@ fun TerminalScreen(
                 ),
                 reducedMotion = reducedMotion,
                 sweepKey = state.executions,
+                focusRequester = focusRequester,
                 onHistory = { state.previousInput() },
             )
             ScrollbackList(

@@ -47,7 +47,7 @@ class Cage(root: Path) {
      * Resuelve lo que el usuario escribió contra el directorio de trabajo.
      *
      * Acepta rutas absolutas (relativas a la raíz de la jaula, **no** a la del sistema), relativas,
-     * `.`, `..` y `~` como sinónimo de la raíz.
+     * `.`, `..` y `~` como sinónimo de la raíz. **Sin argumento, el directorio de trabajo.**
      *
      * Devuelve la ruta **sin canonicalizar**: es solo la resolución léxica. Quien vaya a tocar el
      * disco tiene que pasar después por [check] o [checkParent], que son los que miran de verdad.
@@ -55,7 +55,14 @@ class Cage(root: Path) {
     fun resolve(arg: String): Path {
         val a = arg.trim()
         return when {
-            a.isEmpty() || a == "~" -> root
+            // Sin argumento, **el directorio de trabajo**. Es lo que hace cualquier shell: `ls` a
+            // secas lista donde estás. Devolver la raíz aquí hacía que `cd Download` seguido de
+            // `ls` enseñara la raíz — el cwd existía pero no lo usaba nadie.
+            //
+            // `cd` sin argumento sí va a la raíz, pero eso es semántica **de `cd`** (§6.1) y la
+            // resuelve él, no esta función.
+            a.isEmpty() -> cwd
+            a == "~" -> root
             a.startsWith("~/") -> root.resolve(a.removePrefix("~/"))
             // Una ruta «absoluta» del usuario es absoluta dentro de la jaula: escribir /DCIM no
             // debe llevar a la raíz del sistema, que además no se puede ni listar.
@@ -149,7 +156,11 @@ class Cage(root: Path) {
      * se delegara a otro proceso.
      */
     fun cd(arg: String): FsResult<Path> {
-        val target = when (val r = check(resolve(arg))) {
+        // `cd` a secas vuelve a la raíz (§6.1). Es la única excepción a «sin argumento, el cwd», y
+        // vive aquí y no en `resolve` para que `ls`, `du` y `find` sin argumento sigan mirando
+        // donde está el usuario.
+        val destino = if (arg.isBlank()) "/" else arg
+        val target = when (val r = check(resolve(destino))) {
             is FsResult.Failure -> return r
             is FsResult.Success -> r.value
         }

@@ -21,7 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.unit.sp
 import dev.tty.core.output.LineGlyph
+import dev.tty.core.text.Columns
 import dev.tty.ui.glyph.Glyph
 import dev.tty.ui.glyph.GlyphState
 import dev.tty.ui.theme.Motion
@@ -150,6 +153,13 @@ private fun ScrollbackLine(
     val glyphCell = remember(measurer, density.density, density.fontScale) {
         with(density) { (measurer.measure("M".repeat(64), Type.Body).size.width / 64f).toDp() }
     }
+
+    // El avance de celda en sp, que es la unidad que entiende TextIndent. Se mide sobre una cadena
+    // larga y se divide: medir un solo carácter acumula error de subpíxel y la continuación
+    // quedaría desalineada justo en las líneas largas, que son las que esto viene a arreglar.
+    val advanceSp = remember(measurer, density.density, density.fontScale) {
+        with(density) { (measurer.measure("M".repeat(64), Type.Body).size.width / 64f).toSp() }
+    }
     val animate = reveal.isAnimated(reducedMotion)
     val settle = rememberSettle(index = revealIndex, enabled = animate && reveal == Reveal.SETTLE)
     // El destello solo va en el eco: es lo que confirma que la tecla entró (§4.6.2).
@@ -194,7 +204,16 @@ private fun ScrollbackLine(
                 },
             // El desvanecimiento por antigüedad va en el color y no en la capa: evita una capa
             // fuera de pantalla por línea, y el color base siempre es opaco.
-            style = base.copy(color = base.color.copy(alpha = lineAlpha)),
+            // El sangrado colgante alinea la continuación con la segunda columna en vez de
+            // devolverla al margen. Sin él, `help` y `apps` se leen mal en cuanto una descripción
+            // no cabe: la continuación aparece pegada a la izquierda, justo encima de la fila
+            // siguiente, y ya no se sabe qué pertenece a qué.
+            style = base.copy(
+                color = base.color.copy(alpha = lineAlpha),
+                textIndent = TextIndent(
+                    restLine = (Columns.hangingIndent(decoded.value) * advanceSp.value).sp,
+                ),
+            ),
         )
     }
 }

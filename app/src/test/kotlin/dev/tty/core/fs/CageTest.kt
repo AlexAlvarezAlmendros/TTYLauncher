@@ -227,4 +227,36 @@ class CageTest {
         assertEquals("/", cage.display())
         assertNotNull(cage.cwd)
     }
+
+    // ------------------------------------------------------------------ sin argumento
+
+    @Test
+    fun `sin argumento se resuelve el directorio de trabajo, no la raiz`() {
+        // El bug que hacía que `cd Download` seguido de `ls` enseñara la raíz: el cwd existía y no
+        // lo miraba nadie. Es lo que hace que un shell se sienta roto.
+        cage.cd("fotos")
+        assertEquals(root.resolve("fotos").toRealPath(), cage.check(cage.resolve("")).getOrNull())
+    }
+
+    @Test
+    fun `un punto tambien es el directorio de trabajo`() {
+        cage.cd("fotos")
+        assertEquals(root.resolve("fotos").toRealPath(), cage.check(cage.resolve(".")).getOrNull())
+    }
+
+    @Test
+    fun `una ruta relativa cuelga del directorio de trabajo`() {
+        Files.createDirectory(root.resolve("fotos/2026"))
+        cage.cd("fotos")
+        assertEquals(
+            root.resolve("fotos/2026").toRealPath(),
+            cage.check(cage.resolve("2026")).getOrNull(),
+        )
+    }
+
+    @Test
+    fun `la virgulilla sigue siendo la raiz aunque estes en otro sitio`() {
+        cage.cd("fotos")
+        assertEquals(root.toRealPath(), cage.check(cage.resolve("~")).getOrNull())
+    }
 }
