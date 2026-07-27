@@ -73,10 +73,18 @@ class AppContainer(context: Context) {
      * El ámbito de todo lo que el contenedor lanza por su cuenta: escritura diferida del scrollback
      * y recargas del catálogo.
      *
-     * `Dispatchers.Default` y no `Dispatchers.Main` a propósito: el dispatcher principal vive en
-     * `kotlinx-coroutines-android`, que no está declarado en el catálogo de versiones, y nada de lo
-     * que se lanza aquí necesita el hilo de UI. `SupervisorJob` para que un fallo escribiendo no se
-     * lleve por delante las recargas del catálogo.
+     * `Dispatchers.Default` y no `Dispatchers.Main`: nada de lo que se lanza aquí —escritura
+     * diferida y recargas del catálogo— toca la UI, y ocupar el hilo principal con ello en la
+     * actividad HOME es exactamente cómo se produce un ANR.
+     *
+     * (Este comentario decía que `Dispatchers.Main` no estaba disponible por no declararse
+     * `kotlinx-coroutines-android` en el catálogo. Era falso: llega transitivamente por
+     * `activity-compose`, la factoría `MainDispatcherFactory` está dentro del APK, y `MainActivity`
+     * y `TerminalState` lo usan sin problema. Lo que sí es cierto es que **se depende de una
+     * transitiva**: si esa cadena cambiara, el `Dispatchers.Main.immediate` de esas dos clases
+     * dejaría de resolverse y el crash sería en `onCreate`.)
+     *
+     * `SupervisorJob` para que un fallo escribiendo no se lleve por delante las recargas.
      */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

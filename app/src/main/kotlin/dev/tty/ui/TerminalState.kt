@@ -87,6 +87,26 @@ class TerminalState(
         _restoredCount.intValue = count
     }
 
+    private val _falling = androidx.compose.runtime.mutableStateOf(false)
+
+    /**
+     * Si el historial está cayendo por un `clear` (§4.6.5).
+     *
+     * `clear` **no hace desaparecer** el historial: lo deja caer y desvanecerse hacia abajo en
+     * 120ms. La diferencia importa porque una pantalla que se vacía en un fotograma no distingue
+     * «se borró» de «falló al cargar», y `clear` es el único borrado real del producto.
+     */
+    val falling: Boolean get() = _falling.value
+
+    /**
+     * **Este bloque va después de TODAS las propiedades que [sync] lee, y no es un detalle de
+     * estilo.** Kotlin inicializa en orden de declaración: un `init` que llama a un método que lee
+     * una propiedad declarada más abajo la lee valiendo `null`, y en la actividad HOME eso es un
+     * crash en `onCreate` antes de pintar un solo fotograma — un móvil sin pantalla de inicio.
+     *
+     * Es exactamente lo que pasó cuando la Fase 5 añadió `_falling` junto a `fallAndClear()`, al
+     * final de la clase, en vez de aquí arriba con el resto del estado.
+     */
     init {
         sync()
     }
@@ -128,17 +148,6 @@ class TerminalState(
         // no-op porque el `finally` ya sincronizó.
         sync()
     }
-
-    private val _falling = androidx.compose.runtime.mutableStateOf(false)
-
-    /**
-     * Si el historial está cayendo por un `clear` (§4.6.5).
-     *
-     * `clear` **no hace desaparecer** el historial: lo deja caer y desvanecerse hacia abajo en
-     * 120ms. La diferencia importa porque una pantalla que se vacía en un fotograma no distingue
-     * «se borró» de «falló al cargar», y `clear` es el único borrado real del producto.
-     */
-    val falling: Boolean get() = _falling.value
 
     /**
      * Vacía la pantalla con la caída.

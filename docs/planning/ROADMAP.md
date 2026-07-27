@@ -167,6 +167,10 @@ Y cuatro bugs que salieron al hacerlo, ninguno detectable compilando:
 
 - **Verlo en un móvil.** Es lo único que queda de las seis fases, y no es poco: 44 tareas esperan
   una pantalla. Ninguna cantidad de tests sustituye a desbloquear el teléfono y escribir.
+- **Hay emulador desde el 2026-07-27** (AVD `ttytest`, Android 36). Cubre arranque, comandos y
+  pintado; no cubre Termux, la frescura del catálogo ni cómo se siente el movimiento. Se montó para
+  cazar el crash de arranque de la Fase 5, y **ese caso justifica la regla**: la app estaba en verde
+  en los 297 tests y moría en todos los arranques.
 - **Termux nunca se ha ejecutado contra el de verdad.** Los tests cubren la lógica con dobles.
 - **El autocompletado por tabulador**, que espera a que aparezca un gesto que convenza.
 
