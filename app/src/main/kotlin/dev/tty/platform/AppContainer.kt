@@ -281,14 +281,16 @@ class AppContainer(context: Context) {
      */
     fun onStop() {
         launcherApps.unregister()
-        termuxClient.unregister()
+        // El receptor de Termux **no** se da de baja aquí. En un launcher, `onStop` ocurre al
+        // apagar la pantalla o al abrir cualquier app: darlo de baja abortaría el `sh` que el
+        // usuario acaba de lanzar justo antes de irse a mirar el resultado.
         scope.launch { store.sync() }
     }
 
     /** Cierre definitivo. Después de esto el contenedor no sirve: se construye otro. */
     fun close() {
         launcherApps.unregister()
-        termuxClient.unregister()
+        termuxClient.close()
         scope.cancel()
     }
 

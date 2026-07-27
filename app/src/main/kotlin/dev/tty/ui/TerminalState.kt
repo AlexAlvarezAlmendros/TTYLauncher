@@ -55,8 +55,26 @@ class TerminalState(
     /** Cómo preguntarle al motor por el símbolo. Lo inyecta quien construye el estado. */
     var symbolProvider: () -> String = { ">" }
 
-    /** Si hay alguna ejecución viva. La Fase 5 lo lee para elegir el glifo; nadie bloquea con él. */
+    /** Si hay alguna ejecución viva. Lo lee el glifo del prompt; nadie bloquea con él. */
     val busy: Boolean get() = running.intValue > 0
+
+    private val shell = mutableIntStateOf(0)
+
+    /** Si lo que corre es una ejecución en Termux: el glifo `SHELL` en vez de `BUSY` (§4.4). */
+    val shellBusy: Boolean get() = shell.intValue > 0
+
+    private val _restoredCount = mutableIntStateOf(0)
+
+    /**
+     * Cuántas líneas venían del disco. **Esas no se animan** (§5.2): lo persistido se muestra ya
+     * presente, y solo lo que llega durante la sesión entra con `settle` o `decode`.
+     */
+    val restoredCount: Int get() = _restoredCount.intValue
+
+    /** Lo llama el arranque tras cargar el historial. */
+    fun markRestored(count: Int) {
+        _restoredCount.intValue = count
+    }
 
     init {
         sync()

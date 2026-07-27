@@ -36,6 +36,7 @@ fun TerminalScreen(
 ) {
     val listState = rememberLazyListState()
     val lines = state.lines
+    val reducedMotion = dev.tty.ui.motion.rememberReducedMotion().value
 
     val onSubmit: (String) -> Unit = remember(state, listState) {
         { input: String ->
@@ -56,7 +57,7 @@ fun TerminalScreen(
         if (headId != null) listState.requestScrollToItem(0)
     }
 
-    TerminalSurface(modifier = modifier) {
+    TerminalSurface(reducedMotion = reducedMotion, modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -68,10 +69,26 @@ fun TerminalScreen(
                     top = Spacing.S3,
                 ),
         ) {
-            PromptRow(onSubmit = onSubmit, symbol = state.promptSymbol)
+            PromptRow(
+                onSubmit = onSubmit,
+                symbol = state.promptSymbol,
+                // En grabación no hay glifo: el `…` como carácter ya dice en qué modo estás.
+                glyph = if (state.promptSymbol == "…") {
+                    null
+                } else {
+                    dev.tty.ui.glyph.promptGlyph(
+                        busy = state.busy,
+                        shell = state.shellBusy,
+                        recording = false,
+                    )
+                },
+                reducedMotion = reducedMotion,
+            )
             ScrollbackList(
                 lines = lines,
                 listState = listState,
+                restoredCount = state.restoredCount,
+                reducedMotion = reducedMotion,
                 modifier = Modifier.weight(1f),
             )
         }

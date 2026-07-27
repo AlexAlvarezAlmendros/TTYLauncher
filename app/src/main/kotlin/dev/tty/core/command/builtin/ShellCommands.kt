@@ -28,7 +28,12 @@ object ShCommand : Command {
     override suspend fun run(line: CommandLine, ctx: CommandContext): Output {
         // Se reconstruye desde la entrada cruda, no desde los tokens: el parser quitó las comillas
         // que bash necesita ver. `sh echo "hola mundo"` tiene que llegar con sus comillas puestas.
-        val script = line.raw.substringAfter(line.verb).trim()
+        //
+        // El corte es POSICIONAL —el verbo es siempre el primer token—, no por contenido:
+        // `substringAfter(verb)` fallaba con `SH uptime` (el verbo se guarda en minúsculas pero
+        // `raw` conserva las mayúsculas) y con el verbo entrecomillado, y en ambos casos devolvía
+        // la línea entera sin avisar.
+        val script = line.raw.trimStart().dropWhile { !it.isWhitespace() }.trim()
         if (script.isEmpty()) return Output.error("$name: needs a line to run")
 
         ctx.termux.check()?.let { return Output.error(it.message(name)) }
@@ -120,6 +125,9 @@ private fun render(result: TermuxResult): Output {
     lines += result.stdout.map { it to Role.OUTPUT }
     lines += result.stderr.map { it to Role.ERROR }
 
+    // Una salida recortada presentada como completa es una mentira (§16).
+    if (result.truncated) lines += dev.tty.core.termux.TermuxParsing.TRUNCATION_NOTICE to Role.STATUS
+
     // El código de salida solo se dice cuando importa: un 0 es el silencio esperado.
     val code = result.exitCode
     if (code != null && code != 0) lines += "exit $code" to Role.STATUS
@@ -129,7 +137,5 @@ private fun render(result: TermuxResult): Output {
 
 /** Traduce la excepción de la capa de plataforma al error tipado. */
 private fun errorOf(t: Throwable): TermuxError =
-    (t as? TermuxException)?.error ?: TermuxError.Failed(t.message ?: "unknown failure")
-
-/** El envoltorio con el que `platform/` devuelve un [TermuxError] a través de `Result`. */
-class TermuxException(val error: TermuxError) : Exception(error.message("termux"))
+    (t as? dev.tty.core.termux.TermuxFailure)?.error
+        ?: TermuxError.Failed(t.message ?: "unknown failure")
