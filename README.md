@@ -6,8 +6,8 @@ iconos, sin cuadrícula, sin widgets, sin cajón de aplicaciones.
 ```
 > open spotify
 > apps whats
-whatsapp        com.whatsapp
-whatsapp-bsns   com.whatsapp.w4b
+whatsapp          com.whatsapp
+whatsapp-business com.whatsapp.w4b
 
 2 apps
 > cd Download
@@ -24,13 +24,60 @@ La diferencia con un launcher minimalista de lista es que aquí la interacción 
 no una selección. La diferencia con una terminal de verdad es que el vocabulario es cerrado y
 auditable, salvo una única puerta explícita hacia Termux.
 
-
 ---
 
 ## Estado
 
-**Greenfield.** Hay documentación y el andamiaje de Gradle; **nada compilado todavía**. El trabajo
-empieza por la Fase 0.
+**Las seis fases están implementadas.** 49 ficheros de Kotlin, **318 tests en JVM sin fallos**,
+`assembleDebug` y `lintDebug` en verde, y la app arranca y se usa tanto en un móvil real como en el
+emulador.
+
+Lo que **no** está cerrado, y no es poco:
+
+- **Las puertas de fase.** La regla del proyecto no es «está implementado», es *«lo he usado como
+  launcher por defecto unos días y no he vuelto al anterior»*. Ninguna fase ha pasado esa puerta.
+- **Termux nunca se ha ejecutado contra el de verdad.** `sh` y `tmux` están escritos y sus errores
+  cubiertos con dobles, pero jamás han hablado con un Termux instalado.
+- Detalles que solo se juzgan mirándolos: si el catálogo se refresca al instalar una app, si Gboard
+  sigue sugiriendo pese a `KeyboardType.Ascii`, y cómo se siente el movimiento en un panel real.
+
+El detalle por tarea está en el [roadmap](docs/planning/ROADMAP.md).
+
+## El vocabulario, entero
+
+Veintiséis verbos. **Lo que no está aquí no existe**: el vocabulario es cerrado por diseño, y
+añadir uno es una decisión de producto, no de implementación.
+
+| | |
+|---|---|
+| **Apps y sistema** | `help` `apps` `open` `kill` `uninstall` `info` `script` `sh` `tmux` `clear` `settings` |
+| **Ficheros** | `pwd` `cd` `ls` `cat` `head` `tail` `mkdir` `rm` `mv` `cp` `touch` `df` `du` `find` `mount` |
+
+`ls`, `cat` y `rm` son de **ficheros**: `apps` no tiene alias `ls`, y desinstalar es `uninstall`.
+
+## Los glifos
+
+No hay iconos. La única iconografía del producto es una matriz de puntos de 5×5 que ocupa dos
+celdas de carácter y vive donde iría el prefijo de la línea. Seis estados, y cada uno informa de
+algo que se puede nombrar:
+
+```
+ .....      ..x..      ..x..      x...x
+ .x.x.      ..x..      ...x.      .x.x.
+ .....      ..x..      xxxxx      ..x..
+ .xxx.      ..x..      ...x.      .x.x.
+ .....      ..x..      ..x..      x...x
+
+ READY       BUSY        OK         FAIL
+en reposo  ejecutando  con salida   error
+```
+
+La rejilla se dibuja **entera**: los apagados reposan al 18% y los encendidos al 100%, como un
+píxel apagado sigue viéndose en una matriz real. Y como máximo hay **un glifo animado en pantalla**
+—el del prompt—; los del historial van congelados en su fotograma.
+
+Es también el icono de la aplicación: lo primero que ves en el cajón es lo primero que ves al
+abrirla.
 
 ## Documentación
 
@@ -42,27 +89,59 @@ empieza por la Fase 0.
 | [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) | Las seis fases, su estado y las decisiones abiertas |
 | [CLAUDE.md](CLAUDE.md) | Convenciones de desarrollo |
 
-## Empezar
+Ante una contradicción mandan en este orden: el funcional, el design system, la arquitectura y por
+último las convenciones.
 
-Requisitos: JDK 17 y el Android SDK (compileSdk 37, Build Tools 36.0.0).
+## Compilar
 
-El wrapper todavía no está generado —faltan `gradlew`, `gradlew.bat` y `gradle-wrapper.jar`—, así
-que la primera vez hay que crearlo. Lo más simple es abrir el proyecto en Android Studio, que trae
-su propia distribución de Gradle. A mano:
+Requisitos: **JDK 17** y el Android SDK con `platforms;android-37.0` y `build-tools;37.0.0`. El
+wrapper de Gradle está versionado, así que no hace falta instalar Gradle.
 
 ```bash
-curl -L -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-9.6.1-bin.zip
-unzip -q /tmp/gradle.zip -d /tmp
-/tmp/gradle-9.6.1/bin/gradle wrapper --gradle-version 9.6.1
-
+./gradlew test            # 318 tests en JVM, sin emulador
 ./gradlew assembleDebug
 ./gradlew installDebug
 ```
 
 Después, en Ajustes de Android, elegir `tty` como aplicación de inicio.
 
+Las versiones viven **solo** en [`gradle/libs.versions.toml`](gradle/libs.versions.toml) y no se
+escriben a mano en ningún `build.gradle.kts`: AGP 9.3.1 · Gradle 9.6.1 · Kotlin 2.2.10 · Compose
+BOM 2026.06.01 · compileSdk 37 · targetSdk 36 · minSdk 26.
+
+Sin Material3, sin DI, sin ORM: ficheros planos y `foundation` a secas.
+
+### En el emulador
+
+Casi todo se puede probar sin móvil, y conviene hacerlo antes de instalar: **un crash de arranque
+en la actividad HOME deja el teléfono sin pantalla de inicio.**
+
+```bash
+sdkmanager --install "emulator" "system-images;android-36;google_apis;x86_64"
+avdmanager create avd -n ttytest -k "system-images;android-36;google_apis;x86_64" -d pixel_6
+
+emulator -avd ttytest -no-window -gpu swiftshader_indirect &
+adb wait-for-device && ./gradlew installDebug
+adb shell am start -n dev.tty.debug/dev.tty.MainActivity
+adb logcat -b crash -d          # el trace, si murió
+```
+
+Cubre que arranque, que los comandos respondan y que la pantalla se pinte. **No cubre** Termux, la
+frescura del catálogo ni cómo se siente el movimiento.
+
+> Si cambias el icono y sigues viendo el anterior, no está roto: la caché de iconos de Android tiene
+> como clave paquete+versión y sobrevive incluso a desinstalar. Se suelta al reiniciar.
+
+## Usarlo
+
 > **Mantén instalado tu launcher anterior.** Ser el launcher por defecto convierte cualquier crash
-> en un móvil inutilizable, y `tty` todavía no es estable.
+> en un móvil inutilizable, y `tty` no ha pasado todavía ninguna puerta de fase.
+
+`sh` y `tmux` necesitan tres cosas, y ninguna la puede abrir el launcher por su cuenta: Termux
+instalado **de F-Droid o GitHub** (el de Google Play está abandonado y firmado con otra clave), el
+permiso `RUN_COMMAND` concedido, y `allow-external-apps = true` en `~/.termux/termux.properties`.
+No hay asistente de configuración: **el mensaje de error es el onboarding**, y dice cuál de las tres
+puertas está cerrada.
 
 ## Licencia
 
