@@ -98,9 +98,26 @@ Un dato que el design system precisa y la especificación deja implícito, y que
 > **La rejilla 5×5 se dibuja entera siempre.** Los puntos apagados reposan al **18%** de opacidad,
 > los encendidos al 100% — igual que un píxel apagado sigue viéndose en una matriz real.
 
-Es lo que hace que `READY` (un solo punto) se lea como un glifo y no como una mota suelta, y lo que
-da a `BUSY` y `SHELL` una estela visible detrás de la columna o fila que barre, porque el barrido
-decae de vuelta a ese suelo en lugar de apagarse del todo.
+Es lo que da a `BUSY` y `SHELL` una estela visible detrás de la columna o fila que barre, porque el
+barrido decae de vuelta a ese suelo en lugar de apagarse del todo.
+
+### El tamaño, que faltaba
+
+Este documento fijaba la rejilla, la opacidad del suelo y las duraciones, pero **nunca fijó cuánto
+mide un glifo**, y ese hueco costó los seis estados: la implementación asumió una celda de carácter
+y a 420dpi cada punto quedó por debajo de dos píxeles físicos. Se veían, y ninguno se distinguía de
+otro.
+
+| Token | Valor | Por qué |
+|---|---|---|
+| `GLYPH_CELLS` | **2 celdas** | Entero de celdas, no dp: mantiene el glifo sobre la retícula monoespaciada. Con un valor en dp la columna de prefijo dejaría de caer en un múltiplo del avance y el texto quedaría descuadrado |
+| `DOT_RATIO` | **0.34** del paso | Era 0.22. El punto mide `2 × ratio` del paso, así que 0.22 daba un 44% de ocupación y a tamaño de celda única resultaba invisible |
+| `HANDLE_IDLE` | **45%** | Opacidad en reposo del control del historial. **No es `DOT_UNLIT` ni `FADE_MIN`**: un punto apagado es contexto y puede vivir al 18%, pero esto es el único elemento pulsable del producto, y uno que no se ve no se puede pulsar |
+
+Las formas de `READY` y `OK` cambiaron el 2026-07-27 y están en
+[functional.md §4.4](../functional.md#44-sistema-de-glifos-de-matriz-de-puntos). La regla que acota
+la cara de `READY`: **no tiene una segunda expresión**, porque una que cambiara de humor según el
+resultado sería un color semántico disfrazado de dibujo.
 
 Los seis estados, sus disparadores y su movimiento están en
 [functional.md §4.4](../functional.md#44-sistema-de-glifos-de-matriz-de-puntos). La regla que lo

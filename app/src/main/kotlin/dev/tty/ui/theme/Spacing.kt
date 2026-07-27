@@ -42,6 +42,21 @@ object Spacing {
      */
     const val COLUMN_GAP_CELLS = 4
 
+    /**
+     * Anchura del glifo de matriz, en **celdas de carácter**.
+     *
+     * El design system fijaba la rejilla (5×5), la opacidad de los apagados (18%) y las duraciones,
+     * pero **nunca fijó el tamaño**, y la implementación asumió una celda. Una celda son ≈7.8sp de
+     * avance en la monoespaciada de 13sp: 25 puntos repartidos ahí dejan cada punto por debajo de
+     * dos píxeles físicos, y los seis estados se vuelven indistinguibles entre sí.
+     *
+     * Se mide en celdas y no en dp **a propósito**: un entero de celdas mantiene el glifo sobre la
+     * retícula monoespaciada, que es lo que sostiene el principio de que un glifo es un carácter
+     * animado y no un icono junto al texto. Con un valor en dp, la columna de prefijo dejaría de
+     * caer en un múltiplo del avance y todo el texto quedaría descuadrado respecto a la rejilla.
+     */
+    const val GLYPH_CELLS = 2
+
     /** Sin esquinas redondeadas en ningún sitio (functional.md §4.8). */
     val Radius = 0.dp
 

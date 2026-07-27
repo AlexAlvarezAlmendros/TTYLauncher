@@ -187,20 +187,35 @@ adicionales.** Un único peso en toda la aplicación.
 
 Sustituye a los iconos. Es el elemento distintivo del producto.
 
-Un glifo es una **rejilla de 5×5 puntos que ocupa exactamente una celda de carácter**: el mismo
-ancho que cualquier letra de la fuente monoespaciada. Esta restricción es lo que lo mantiene
-minimalista — no es un icono junto al texto, es un carácter más de la retícula, solo que animado.
+Un glifo es una **rejilla de 5×5 puntos que ocupa un número entero de celdas de carácter**: hoy
+**dos**. Se mide en celdas y no en dp para que siga cayendo sobre la retícula monoespaciada — no es
+un icono junto al texto, es un carácter de la retícula, solo que animado y del ancho de dos.
+
+> **Fue una celda hasta el 2026-07-27, y era demasiado poco.** Veinticinco puntos dentro de un
+> avance de ≈7.8sp dejan cada punto por debajo de dos píxeles físicos a 420dpi. Los seis estados
+> existían y ninguno se distinguía del otro: `FAIL` se veía como una mancha y `READY` como un
+> recuadro quieto. La forma no significa nada si no hay superficie que iluminar.
 
 Un único color, el mismo de la línea a la que pertenece. Sin tono, sin relleno, sin contorno.
 
 | Glifo | Cuándo | Movimiento |
 |---|---|---|
-| `READY` | Prompt en reposo | Punto central respirando, 2.4s, opacidad 40%→100% |
+| `READY` | Prompt en reposo | Dos ojos y una boca. Parpadea una vez por ciclo de 2.4s |
 | `BUSY` | Comando ejecutándose | Columna de puntos barriendo de izquierda a derecha, bucle 600ms |
 | `SHELL` | Ejecución en Termux en curso | Cascada: filas encendiéndose de arriba abajo, bucle 900ms |
 | `REC` | Modo grabación de script | Punto central pulsando, 800ms |
-| `OK` | Comando completado con salida | Puntos convergen a una diagonal ascendente y se atenúan, 400ms, una vez |
+| `OK` | Comando completado con salida | Una flecha apuntando a la derecha, 400ms, una vez |
 | `FAIL` | Error | Puntos forman una X con una vibración única de 300ms, luego estáticos |
+
+**`READY` es lo más cerca que el producto llega a una figura, y llega hasta ahí y ni un paso más.**
+La §4.8 prohíbe la iconografía figurativa, así que la regla que lo acota es esta: **la cara no tiene
+una segunda expresión**. No sonríe al acertar ni se entristece al fallar; eso sería un color
+semántico disfrazado de dibujo, y el resultado ya lo comunican `OK` y `FAIL`. Parpadea, y parpadear
+informa de un único estado nombrable: el prompt está vivo y esperando.
+
+`OK` era una diagonal ascendente y pasó a ser una flecha el 2026-07-27: una raya inclinada no
+significa «hecho», y además se confundía con la diagonal del control del historial, que vive a un
+centímetro en la misma pantalla.
 
 **Regla que hace que esto funcione: como máximo un glifo animado en pantalla.** El del prompt.
 Los glifos de líneas pasadas quedan congelados en su fotograma final. Sin esta regla, una

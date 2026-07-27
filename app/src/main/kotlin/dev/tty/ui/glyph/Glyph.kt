@@ -27,11 +27,13 @@ import kotlin.math.roundToInt
  * Los seis estados del glifo (functional.md §4.4).
  *
  * Sustituyen a los iconos y son el elemento distintivo del producto. **No son iconografía**: un
- * glifo es una rejilla de 5×5 puntos que ocupa exactamente una celda de carácter — el mismo ancho
- * que cualquier letra de la monoespaciada. Es un carácter más de la retícula, solo que animado.
+ * glifo es una rejilla de 5×5 puntos que ocupa un número **entero de celdas de carácter**
+ * ([dev.tty.ui.theme.Spacing.GLYPH_CELLS], hoy dos). Es un carácter más de la retícula, solo que
+ * animado y del ancho de dos — medirlo en celdas y no en dp es lo que lo mantiene sobre la rejilla
+ * monoespaciada en lugar de convertirlo en un icono pegado al texto.
  */
 enum class GlyphState {
-    /** Prompt en reposo. Punto central respirando, 2.4s. */
+    /** Prompt en reposo. Dos ojos y una boca, con un parpadeo por ciclo de 2.4s. */
     READY,
 
     /** Comando ejecutándose. Columna barriendo de izquierda a derecha, 600ms. */
@@ -43,7 +45,7 @@ enum class GlyphState {
     /** Modo grabación. Punto central pulsando, 800ms. */
     REC,
 
-    /** Comando completado con salida. Diagonal ascendente que se atenúa, 400ms, una vez. */
+    /** Comando completado con salida. Una flecha apuntando a la derecha, 400ms, una vez. */
     OK,
 
     /** Error. Una X con una vibración única de 300ms, luego estático. */
@@ -137,8 +139,32 @@ fun Glyph(
     }
 }
 
-private const val GRID = 5f
-private const val DOT_RATIO = 0.22f
+/**
+ * La rejilla, 5×5. `internal` y no `private` porque el control del historial dibuja sobre la misma
+ * retícula: dos copias del mismo número se desincronizan en cuanto alguien toca una.
+ */
+internal const val GRID = 5f
+
+/**
+ * Radio del punto como fracción del paso de la rejilla.
+ *
+ * **Subió de 0.22 a 0.34 el 2026-07-27.** Con 0.22 el punto medía `2 × 0.22 = 0.44` del paso, y
+ * como el glifo ocupaba **una sola celda de carácter** (≈7.8sp de avance en la monoespaciada de
+ * 13sp), cada punto acababa midiendo menos de dos píxeles físicos en un panel de 420dpi. Los seis
+ * estados existían, se dibujaban y eran indistinguibles: la `X` de `FAIL` se leía como una mancha,
+ * y `READY` —un punto de 2px respirando dentro de 24 puntos apagados— se leía como un recuadro
+ * quieto. No era un fallo de la animación: era que no había superficie que iluminar.
+ */
+internal const val DOT_RATIO = 0.34f
+
+/**
+ * La ventana del parpadeo de [GlyphState.READY], en fracción del ciclo.
+ *
+ * Un parpadeo es instantáneo, así que es un corte duro y no una interpolación: suavizarlo lo
+ * convertiría en un desvanecimiento, que informa de otra cosa.
+ */
+private const val BLINK_FROM = 0.90f
+private const val BLINK_TO = 0.96f
 
 /**
  * Cuánto está encendido un punto, de 0 a 1. **Es toda la gramática del sistema de glifos.**
@@ -149,9 +175,19 @@ private const val DOT_RATIO = 0.22f
 internal fun intensity(state: GlyphState, row: Int, col: Int, progress: Float): Float {
     val center = row == 2 && col == 2
     return when (state) {
-        // Respiración: el punto central va de 40% a 100% y vuelta. Los demás, apagados.
-        GlyphState.READY ->
-            if (center) 0.4f + 0.6f * triangle(progress) else 0f
+        // Dos ojos y una boca, y un parpadeo cada ciclo. Sustituye al punto central respirando,
+        // que sobre 24 puntos apagados no se leía como movimiento sino como un recuadro quieto.
+        //
+        // El parpadeo informa de un estado nombrable —«el prompt está vivo y esperando»— que es lo
+        // que la §4.4 exige de toda animación. Ojo con lo que NO puede pasar: no hay una segunda
+        // expresión. Una cara que sonríe al acertar y se entristece al fallar sería un color
+        // semántico disfrazado, y eso lo prohíbe la §4.8 igual de rotundamente.
+        GlyphState.READY -> when {
+            row == 1 && (col == 1 || col == 3) ->
+                if (progress > BLINK_FROM && progress < BLINK_TO) 0f else 1f
+            row == 3 && col in 1..3 -> 1f
+            else -> 0f
+        }
 
         // Pulso: más marcado que la respiración, y más rápido. Informa de que estás en un modo.
         GlyphState.REC ->
@@ -164,8 +200,17 @@ internal fun intensity(state: GlyphState, row: Int, col: Int, progress: Float): 
         // Cascada: filas encendiéndose de arriba abajo. Misma estela, otro eje.
         GlyphState.SHELL -> sweep(row.toFloat(), progress)
 
-        // Diagonal ascendente que se atenúa. Un solo disparo: al terminar se queda ahí.
-        GlyphState.OK -> if (row + col == 4) progress else 0f
+        // Una flecha a la derecha: asta en la fila central y punta en las cuatro esquinas del
+        // vértice. Era la antidiagonal `row + col == 4`, que no significaba nada —una raya
+        // inclinada no dice «hecho»— y encima se confundía con la diagonal del control del
+        // historial, que está a un centímetro en la misma pantalla.
+        //
+        //     . . x . .
+        //     . . . x .
+        //     x x x x x
+        //     . . . x .
+        //     . . x . .
+        GlyphState.OK -> if (row == 2 || abs(row - 2) + col == 4) progress else 0f
 
         // Una X. La vibración va en el desplazamiento, no en la intensidad.
         GlyphState.FAIL -> if (row == col || row + col == 4) progress else 0f

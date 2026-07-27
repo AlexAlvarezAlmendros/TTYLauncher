@@ -184,7 +184,9 @@ fun PromptRow(
             if (glyph != null) {
                 dev.tty.ui.glyph.Glyph(
                     state = glyph,
-                    cell = with(androidx.compose.ui.platform.LocalDensity.current) { advancePx.toDp() },
+                    cell = with(androidx.compose.ui.platform.LocalDensity.current) {
+                        (advancePx * Spacing.GLYPH_CELLS).toDp()
+                    },
                     color = Palette.TextDim,
                     reducedMotion = reducedMotion,
                 )
@@ -248,7 +250,7 @@ fun PromptRow(
             if (onHistory != null) {
                 Spacer(modifier = Modifier.width(Spacing.S2))
                 HistoryHandle(
-                    cell = with(LocalDensity.current) { advancePx.toDp() },
+                    cell = with(LocalDensity.current) { (advancePx * Spacing.GLYPH_CELLS).toDp() },
                     onCycle = {
                         val previous = onHistory()
                         if (previous != null) {
@@ -365,16 +367,22 @@ private fun HistoryHandle(cell: Dp, onCycle: () -> Unit) {
                 onClick = onCycle,
             ),
     ) {
-        val step = size.width / 5f
-        val radius = step * 0.22f
-        // Tres puntos en diagonal: sugiere «hacia atrás» sin dibujar una flecha.
-        listOf(1 to 1, 2 to 2, 3 to 3).forEach { (row, col) ->
+        val step = size.width / dev.tty.ui.glyph.GRID
+        val radius = step * dev.tty.ui.glyph.DOT_RATIO
+        // La diagonal COMPLETA, de esquina a esquina. Eran tres puntos centrados —(1,1), (2,2),
+        // (3,3)— dentro de una celda de carácter, lo que daba una marca de tres píxeles en un panel
+        // de 420dpi: ilegible, y confundible con la antidiagonal que dibujaba `OK` a un centímetro.
+        // Cinco puntos sobre el doble de celda la hacen larga y leíble sin dibujar una flecha, que
+        // es lo que la reservaría para el significado de `OK`.
+        (0 until dev.tty.ui.glyph.GRID.toInt()).forEach { i ->
             drawCircle(
                 color = Palette.TextDim,
                 radius = radius,
-                center = Offset(step * (col + 0.5f), step * (row + 0.5f)),
+                center = Offset(step * (i + 0.5f), step * (i + 0.5f)),
                 // La pulsación solo cambia la opacidad. Nada de color, nada de escala (§4.8).
-                alpha = if (pressed) 1f else Palette.FADE_MIN,
+                // En reposo va al suelo de los puntos encendidos, no a FADE_MIN: es un control, y
+                // uno que no se ve no se puede pulsar.
+                alpha = if (pressed) 1f else Palette.HANDLE_IDLE,
             )
         }
     }

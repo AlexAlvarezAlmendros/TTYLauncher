@@ -68,6 +68,15 @@ object Palette {
     const val DOT_LIT = 1f
 
     /**
+     * Opacidad en reposo del control del historial (§4.8: el único elemento pulsable del producto).
+     *
+     * **No es `DOT_UNLIT` ni `FADE_MIN`.** Un punto apagado de una matriz es contexto y puede vivir
+     * al 18%; este es un control, y uno que no se ve no se puede pulsar. Se queda por debajo del
+     * texto para no competir con él, y muy por encima del suelo de la matriz para existir.
+     */
+    const val HANDLE_IDLE = 0.45f
+
+    /**
      * Suelo del parpadeo del cursor de bloque. Del `@keyframes tty-cursor` del design system: la
      * opacidad va de 1 a 0.12 y vuelve, con curva suave — nunca encendido/apagado duro.
      */
