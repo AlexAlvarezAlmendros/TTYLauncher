@@ -76,8 +76,14 @@ La rejilla se dibuja **entera**: los apagados reposan al 18% y los encendidos al
 píxel apagado sigue viéndose en una matriz real. Y como máximo hay **un glifo animado en pantalla**
 —el del prompt—; los del historial van congelados en su fotograma.
 
-Es también el icono de la aplicación: lo primero que ves en el cajón es lo primero que ves al
-abrirla.
+**El icono de la aplicación ya no es uno de ellos.** Lo fue —era `READY`— hasta el 2026-07-30, y el
+criterio no ha cambiado: lo primero que ves en el cajón tiene que ser lo primero que ves al abrirla.
+Lo que cambió es la respuesta. Una matriz de 25 puntos se lee a 13sp en su renglón, pero a 24dp
+entre otros cincuenta iconos vuelve a ser el problema de superficie de la §4.4. Así que el icono es
+ahora **el prompt entero**: el chevron y el cursor de bloque sobre el degradado. Sigue sin haber
+nada figurativo, siguen siendo dos caracteres de la retícula. El dibujo sale de
+[`public/favicon.svg`](public/favicon.svg), del que se derivan también el favicon y el
+apple-touch-icon.
 
 ## Documentación
 

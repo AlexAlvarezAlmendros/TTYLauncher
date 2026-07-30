@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  El glifo READY: la matriz de puntos 5×5 con la cara (functional.md §4.4).
+  **El prompt**: el chevron y el cursor de bloque encendido, que es literalmente lo que aparece en
+  pantalla al abrir la app. Mismo criterio que tenía el icono anterior —lo primero que ves en el
+  cajón es lo primero que ves al abrirla—, con otra respuesta a la pregunta de qué es «lo primero».
 
-  Es literalmente el mismo glifo que late en el prompt, con la misma geometría: paso de rejilla
-  uniforme y radio de punto = 0.34 del paso, el `DOT_RATIO` de `ui/glyph/Glyph.kt`. Si esa constante
-  cambia, este fichero se queda desincronizado — que es exactamente lo que le pasó al icono
-  anterior, un punto central suelto que era el READY de antes de que READY fuese una cara.
+  Sustituye al glifo `READY` el 2026-07-30. La matriz 5×5 se lee a 13sp en su sitio, pero un icono
+  de lanzador se ve a 24dp entre otros cincuenta: veinticinco puntos ahí dentro vuelven a ser el
+  problema de superficie que la §4.4 ya documentó a otra escala. El chevron y el cursor son dos
+  caracteres de la retícula, no una ilustración, así que la §4.8 los tolera por la misma puerta.
 
-  **La rejilla se dibuja entera**, como en la app: los 20 puntos apagados al 18% y los 5 encendidos
-  al 100%. Sin los apagados esto sería un icono figurativo; con ellos es una matriz de puntos que
-  resulta que dibuja una cara, que es la única forma en que la §4.8 lo tolera.
+  Las dos formas van **dibujadas**, no compuestas con la monoespaciada: un icono no puede depender
+  de que la fuente exista en el dispositivo. Los contornos se midieron sobre el render de 512 y el
+  chevron conserva la cara vertical plana que la mono le corta, en vez de cerrar en punta.
 
-  Geometría: paso 10dp, radio 3.4dp, centros en 34, 44, 54, 64, 74.
-  El punto de esquina queda a 31.7dp del centro, dentro de la máscara circular de 33dp que es
-  el peor recorte que aplica un lanzador.
+  Geometría, derivada del asset de 512 (`public/favicon.svg`) con
+  `icono = 54 + (svg - 256) * 0.147558`:
+  la tinta ocupa 54.1 × 33.1dp centrada en (54, 54), así que la esquina más lejana queda a **31.7dp**
+  del centro. Ese es el mismo margen que dejaba el icono anterior contra la máscara circular de 33dp
+  —el peor recorte que aplica un lanzador—, y no se apura a 33 a propósito: tocar el borde exacto
+  deja la esquina a merced del antialiasing de cada launcher.
+
+  Dos colores, los mismos de la app: el chevron en `TextPrimary` y el cursor en `TextHigh`, que es
+  la jerarquía que ya tienen en pantalla. Sin tono, como todo lo demás.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -21,14 +29,13 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Los apagados. Reposan al 18%: un píxel apagado sigue viéndose en una matriz real. -->
+    <!-- El chevron. La cara vertical de la punta es la que corta la monoespaciada. -->
     <path
         android:fillColor="#FFE4E6E9"
-        android:fillAlpha="0.18"
-        android:pathData="M34,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,34 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,54 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M34,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M74,74 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0" />
+        android:pathData="M26.967,41.841 L48.968,52.849 L48.968,58.087 L26.967,69.080 L26.967,64.477 L46.460,55.461 L26.967,46.460 Z" />
 
-    <!-- Los encendidos: dos ojos y una boca. -->
+    <!-- El cursor de bloque, encendido. -->
     <path
-        android:fillColor="#FFE4E6E9"
-        android:pathData="M44,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,44 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M44,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M54,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 M64,64 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0" />
+        android:fillColor="#FFF7F8FA"
+        android:pathData="M60.920,37.444 L81.033,37.444 L81.033,70.556 L60.920,70.556 Z" />
 </vector>
