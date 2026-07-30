@@ -48,9 +48,11 @@ local.properties
 *.dex
 output.json
 
-# Firma: nunca en el repo
+# Firma: nunca en el repo. El keystore vive en ~/.android/keystores/ y sus credenciales en
+# keystore.properties, que es local de cada máquina igual que local.properties.
 *.jks
 *.keystore
+keystore.properties
 
 # Android Studio / IntelliJ
 .idea/

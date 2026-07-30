@@ -28,14 +28,16 @@ auditable, salvo una única puerta explícita hacia Termux.
 
 ## Estado
 
-**Las seis fases están implementadas.** 49 ficheros de Kotlin, **318 tests en JVM sin fallos**,
-`assembleDebug` y `lintDebug` en verde, y la app arranca y se usa tanto en un móvil real como en el
-emulador.
+**Versión 1.0.0, firmada.** Las seis fases están implementadas: 49 ficheros de Kotlin, **318 tests
+en JVM sin fallos**, `assembleRelease` y `lintVitalRelease` en verde, y el APK de release —
+minificado con R8 — arranca y responde tanto en un móvil real como en el emulador. Qué trae, entero:
+[release notes](docs/RELEASE-NOTES.md).
 
 Lo que **no** está cerrado, y no es poco:
 
 - **Las puertas de fase.** La regla del proyecto no es «está implementado», es *«lo he usado como
-  launcher por defecto unos días y no he vuelto al anterior»*. Ninguna fase ha pasado esa puerta.
+  launcher por defecto unos días y no he vuelto al anterior»*. Ninguna fase ha pasado esa puerta:
+  esto es un 1.0.0 de alcance completo, no de kilometraje.
 - **Termux nunca se ha ejecutado contra el de verdad.** `sh` y `tmux` están escritos y sus errores
   cubiertos con dobles, pero jamás han hablado con un Termux instalado.
 - Detalles que solo se juzgan mirándolos: si el catálogo se refresca al instalar una app, si Gboard
@@ -93,6 +95,7 @@ apple-touch-icon.
 | [docs/architecture.md](docs/architecture.md) | Cómo se construye. Decisiones de implementación verificadas |
 | [docs/design/DESIGN-SYSTEM.md](docs/design/DESIGN-SYSTEM.md) | Los valores: color, tipografía, espaciado, movimiento y los ocho componentes |
 | [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) | Las seis fases, su estado y las decisiones abiertas |
+| [docs/RELEASE-NOTES.md](docs/RELEASE-NOTES.md) | Qué trae cada versión, sus limitaciones conocidas y cómo se verificó |
 | [CLAUDE.md](CLAUDE.md) | Convenciones de desarrollo |
 
 Ante una contradicción mandan en este orden: el funcional, el design system, la arquitectura y por
@@ -112,10 +115,41 @@ wrapper de Gradle está versionado, así que no hace falta instalar Gradle.
 Después, en Ajustes de Android, elegir `tty` como aplicación de inicio.
 
 Las versiones viven **solo** en [`gradle/libs.versions.toml`](gradle/libs.versions.toml) y no se
-escriben a mano en ningún `build.gradle.kts`: AGP 9.3.1 · Gradle 9.6.1 · Kotlin 2.2.10 · Compose
-BOM 2026.06.01 · compileSdk 37 · targetSdk 36 · minSdk 26.
+escriben a mano en ningún `build.gradle.kts` —tampoco `versionName` ni `versionCode`—: AGP 9.3.1 ·
+Gradle 9.6.1 · Kotlin 2.2.10 · Compose BOM 2026.06.01 · compileSdk 37 · targetSdk 36 · minSdk 26.
 
 Sin Material3, sin DI, sin ORM: ficheros planos y `foundation` a secas.
+
+### Release
+
+```bash
+./gradlew assembleRelease   # → app/build/outputs/apk/release/
+```
+
+R8 y `shrinkResources` van activados, así que **el APK de release no es el de debug con otro
+nombre**: arráncalo en el emulador antes de darlo por bueno.
+
+Sale **firmado** si existe `keystore.properties` en la raíz del repo, que es local de cada máquina
+y está en `.gitignore` igual que `local.properties`:
+
+```properties
+storeFile=/ruta/absoluta/al/tty-release.jks
+storePassword=…
+keyAlias=tty
+keyPassword=…
+```
+
+Si ese fichero no está, **el build no falla**: produce `app-release-unsigned.apk`. El modo de fallo
+correcto es un APK que no instala, no un proyecto que no compila — `assembleDebug` no necesita nada
+de esto. Firma v2 + v3; AGP omite el JAR signing v1 con `minSdk >= 24`.
+
+El keystore vive **fuera del repo** a propósito. **Si se pierde, `dev.tty` no se puede volver a
+actualizar jamás**: Android identifica una app por paquete + firma, y la única salida sería publicar
+otro paquete y que todo el mundo desinstale y reinstale.
+
+Para publicar una versión: subir `versionName` y **siempre** `versionCode` —un entero monótono,
+independiente del nombre— en el catálogo, y añadir su sección a las
+[release notes](docs/RELEASE-NOTES.md).
 
 ### En el emulador
 
