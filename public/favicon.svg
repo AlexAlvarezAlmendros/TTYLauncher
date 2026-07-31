@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="tty">
+  <title>tty</title>
+  <!-- The launcher icon, taken from the 512x512 Play Store asset: the prompt
+       itself — a chevron and a lit block cursor over the gradient the product
+       wakes up to.
+
+       Both shapes are drawn, not set in JetBrains Mono, because a favicon
+       cannot wait for a webfont; the outlines were measured off the rendered
+       icon and match it to within a pixel of antialiasing. The chevron keeps
+       the flat vertical face the mono cuts instead of closing to a point.
+
+       The ink is scaled 1.42x from the store asset. That asset leaves room for
+       the rounded mask Google applies, and the same padding in a browser tab
+       would waste half the space the mark has to read in. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#07080b"/>
+      <stop offset="0.35" stop-color="#101420"/>
+      <stop offset="0.62" stop-color="#26355c"/>
+      <stop offset="0.86" stop-color="#414c62"/>
+      <stop offset="1" stop-color="#59636f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <path d="M72.8 173.6 L221.9 248.2 L221.9 283.7 L72.8 358.2 L72.8 327 L204.9 265.9 L72.8 204.9 Z" fill="#e4e6e9"/>
+  <rect x="302.9" y="143.8" width="136.3" height="224.4" fill="#f7f8fa"/>
+</svg>

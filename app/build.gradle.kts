@@ -1,8 +1,23 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     // Único plugin de Kotlin que se aplica a mano: AGP 9 trae el resto integrado.
     alias(libs.plugins.compose.compiler)
 }
+
+// Credenciales de firma. Viven en keystore.properties, que es local de cada máquina y está en
+// .gitignore igual que local.properties: ni la contraseña ni la ruta del keystore se versionan.
+// Si el fichero no está —otra máquina, un clon limpio, CI sin secretos— no se falla el build: se
+// deja `release` sin firmar. Fallar aquí rompería también `assembleDebug`, que no necesita nada
+// de esto, y el modo de fallo correcto es un APK que no instala, no un proyecto que no compila.
+val keystoreProperties =
+    Properties().apply {
+        val file = rootProject.file("keystore.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
+val hasReleaseKeystore =
+    keystoreProperties.getProperty("storeFile")?.let { File(it).exists() } == true
 
 android {
     namespace = "dev.tty"
@@ -13,12 +28,29 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         // En AGP 9 targetSdk toma por defecto el valor de compileSdk: declararlo explícitamente.
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        versionCode = libs.versions.versionCode.get().toInt()
+        versionName = libs.versions.versionName.get()
+    }
+
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = File(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                // Sin v1 (JAR signing): AGP lo omite de todas formas con minSdk >= 24, y aquí es
+                // 26. v2 cubre desde API 24 y v3 desde la 28, así que no hay dispositivo soportado
+                // que se quede sin firma verificable.
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             // proguard-android.txt está prohibido en AGP 9: usar la variante -optimize.

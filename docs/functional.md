@@ -224,6 +224,15 @@ pantalla llena de historial es una discoteca.
 El glifo ocupa la posición donde antes iban los prefijos `>` y `!`. El prefijo `…` del modo
 grabación se mantiene como carácter, porque `REC` ya comunica el estado en el prompt.
 
+**El icono del lanzador no es un glifo, y desde el 2026-07-30 tampoco lo intenta.** Lo fue —era
+`READY`— y el criterio sigue siendo el mismo: lo primero que se ve en el cajón tiene que ser lo
+primero que se ve al abrirla. Lo que cambia es la respuesta. Una matriz de 25 puntos se lee a 13sp
+en su renglón porque ahí el tamaño lo fija el producto; a 24dp entre otros cincuenta iconos lo fija
+el lanzador, y vuelve el problema de superficie del recuadro de arriba sin ningún `GLYPH_CELLS` que
+subir. El icono es **el prompt entero**: el chevron y el cursor de bloque sobre el degradado de la
+§4.2. Sigue cumpliendo la §4.8 por la misma puerta que los glifos —son dos caracteres de la
+retícula, no una ilustración— y es la **única** iconografía que vive fuera de la pantalla.
+
 ### 4.5 Animación de aparición de texto
 
 Dos modos, elegidos por el **rol** de la línea, nunca por gusto.
@@ -278,8 +287,9 @@ Cinco, y ninguna más sin justificarla contra el principio de que el movimiento 
 
 ### 4.8 Prohibiciones explícitas
 
-- Ningún icono figurativo. Los glifos de matriz de puntos son la única iconografía y son
-  abstractos por definición.
+- Ningún icono figurativo. Los glifos de matriz de puntos son la única iconografía **dentro de la
+  pantalla** y son abstractos por definición. Fuera de ella hay exactamente una excepción, la que
+  Android obliga a tener: el icono del lanzador, que es el prompt dibujado (§4.4).
 - Ningún color con tono. Ni verde de éxito, ni rojo de error, ni ámbar de aviso.
 - Ningún borde salvo la línea del prompt.
 - Ninguna esquina redondeada, ninguna sombra, ningún efecto de vidrio o desenfoque.

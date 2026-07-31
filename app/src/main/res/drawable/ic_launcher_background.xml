@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  El degradado del producto, el mismo que se ve al abrir la app: las cinco paradas de la §4.2, con
+  las mismas posiciones que `Palette.Stops` (0 · 0.35 · 0.62 · 0.86 · 1). No es un fondo decorativo,
+  es la superficie sobre la que vive el prompt.
+
+  Antes era `@color/ink` a secas. Se convierte en vector con gradiente porque el icono ya no es una
+  marca sobre tinta plana, sino la pantalla de arranque en miniatura.
+
+  **El degradado va de y=18 a y=90, no de 0 a 108.** De los 108dp del lienzo, un lanzador solo
+  enseña los 72 centrales: los 18 de cada borde son margen de paralaje y se recortan siempre.
+  Repartiendo las cinco paradas sobre el lienzo entero, lo único que se ve es el tercio oscuro y el
+  icono se lee como tinta plana — comprobado en el emulador. Sobre 18–90 se ve el degradado que se
+  ve al abrir la app, que es justo lo que el icono promete. Fuera de esa banda el color se extiende
+  con las paradas de los extremos, así que las esquinas siguen siendo tinta.
+
+  Regla crítica de la paleta: el degradado NUNCA alcanza el blanco. La última parada es #59636F.
+
+  Los hexadecimales están duplicados de `ui/theme/Palette.kt` porque el sistema los necesita antes
+  de que exista Compose. Si la paleta cambia, este fichero se queda desincronizado: es la misma
+  costura que ya tiene `@color/ink`.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path android:pathData="M0,0 L108,0 L108,108 L0,108 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="18"
+                android:endX="54"
+                android:endY="90">
+                <item android:offset="0" android:color="#FF07080B" />
+                <item android:offset="0.35" android:color="#FF101420" />
+                <item android:offset="0.62" android:color="#FF26355C" />
+                <item android:offset="0.86" android:color="#FF414C62" />
+                <item android:offset="1" android:color="#FF59636F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

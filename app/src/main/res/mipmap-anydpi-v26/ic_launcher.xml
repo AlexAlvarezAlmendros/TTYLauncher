@@ -2,18 +2,19 @@
 <!--
   minSdk es 26, así que este adaptive icon cubre todos los dispositivos y no hacen falta PNG.
 
-  El icono es **el glifo READY**: la misma matriz de puntos 5×5 que late en el prompt, sobre tinta.
-  No es una ilustración de la app, es la app — lo primero que ves en el cajón es exactamente lo
-  primero que ves al abrirla.
+  El icono es **el prompt**: el chevron y el cursor de bloque sobre el degradado del producto. Lo
+  primero que ves en el cajón es lo primero que ves al abrirla, que es el criterio que este icono ha
+  tenido siempre; lo que cambió el 2026-07-30 es la respuesta a qué es «lo primero». Antes era el
+  glifo `READY`, y una matriz de 25 puntos no sobrevive a 24dp entre otros cincuenta iconos.
 
-  Eso obliga a mantenerlos sincronizados: cuando READY dejó de ser un punto central y pasó a ser una
-  cara, este icono se quedó atrás enseñando el glifo antiguo. Si READY vuelve a cambiar, cambia aquí.
+  Fuente de verdad del dibujo: `public/favicon.svg`, el mismo asset del que salen el favicon y el
+  apple-touch-icon. Si cambia la marca, cambia ahí y se vuelve a derivar aquí.
 
-  `monochrome` reutiliza el mismo dibujo: los iconos temáticos de Android 13+ lo tiñen entero, y la
-  matriz sobrevive al tinte porque su jerarquía está en la opacidad (18% / 100%), no en el color.
+  `monochrome` reutiliza el primer plano: los iconos temáticos de Android 13+ lo tiñen entero, y
+  chevron y cursor sobreviven al tinte porque son formas macizas, no una jerarquía de opacidades.
 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ink" />
+    <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
     <monochrome android:drawable="@drawable/ic_launcher_foreground" />
 </adaptive-icon>
