@@ -32,6 +32,7 @@ Dos consecuencias que hay que respetar:
 | 4 | Termux | 🔄 En curso | [04-termux.md](plans/04-termux.md) | `tmux build -k "…"` devuelve la foto del pane con la tipografía de `tty` |
 | 5 | Sistema de movimiento | 🔄 En curso | [05-movimiento.md](plans/05-movimiento.md) | Los seis glifos, `settle`/`decode` y las cinco microanimaciones, con movimiento reducido soportado |
 | 6 | Pulido | 🔄 En curso | [06-pulido.md](plans/06-pulido.md) | Historial de entradas, banner real y sugerencia por distancia de edición |
+| 7 | Distribución | 🔄 En curso | [07-distribucion.md](plans/07-distribucion.md) | `tty` aparece en F-Droid y se actualiza solo al publicar un tag |
 
 ## Foco actual
 

@@ -1,0 +1,22 @@
+tty replaces your home screen with a prompt. No icons, no grid, no widgets, no app drawer: you type <code>open spotify</code> and Spotify opens. Interaction is a language, not a selection.
+
+The difference with a minimalist list launcher is that here you compose commands; the difference with a real terminal is that the vocabulary is closed and auditable — twenty-six verbs, and what is not in the list does not exist.
+
+<b>Apps and system</b>
+<code>help apps open kill uninstall info script sh tmux clear settings</code>
+
+<b>Files</b>
+<code>pwd cd ls cat head tail mkdir rm mv cp touch df du find mount</code>
+
+Highlights:
+
+• <b>Fuzzy app resolution</b> — <code>open wh</code> opens WhatsApp; if it is ambiguous, the launcher says so and never guesses
+• <b>File verbs over /sdcard</b> — a hardened path jail keeps every operation inside shared storage
+• <b>Scripts</b> — record command sequences with positional arguments and replay them by name
+• <b>Termux integration</b> — <code>sh</code> and <code>tmux</code> are the single explicit hatch to a real shell (requires Termux)
+• <b>Persistent scrollback</b> — survives reboots, stored only on the device, excluded from cloud backups; <code>clear</code> is the only real delete
+• <b>One aesthetic</b> — a single monospaced face, a five-stop gradient, 5×5 dot-matrix glyphs as the only iconography; no colors, no icons, no spinners
+
+Privacy: no network access, no analytics, no trackers. The app never talks to the internet.
+
+Permissions: all-files access is requested on first run because the shell's root is /sdcard; REQUEST_DELETE_PACKAGES only opens the system uninstall dialog; the Termux RUN_COMMAND permission is optional and only used by <code>sh</code> and <code>tmux</code>.
