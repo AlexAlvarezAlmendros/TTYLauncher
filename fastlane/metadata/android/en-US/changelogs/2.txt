@@ -1,0 +1,8 @@
+initial release — the full scope of the six phases:
+
+• app management: open, apps, kill, uninstall, info, settings
+• fifteen file verbs over /sdcard behind a hardened path jail
+• recordable scripts with positional arguments
+• termux integration through sh and tmux
+• the movement system: six dot-matrix glyphs, settle/decode, reduced motion support
+• persistent scrollback, input history, edit-distance suggestions

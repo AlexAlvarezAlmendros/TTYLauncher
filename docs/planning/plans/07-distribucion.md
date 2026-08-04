@@ -1,0 +1,65 @@
+# Plan 07 — Distribución en F-Droid
+
+> Fase: 7 | Estado: 🔄 En curso | Iniciado: 2026-08-04 | Cerrado: —
+> Hito del roadmap: `tty` aparece en F-Droid y se actualiza solo al publicar un tag
+
+La fase deja la app publicada en el repositorio oficial de F-Droid, con metadatos que F-Droid lee
+del propio repo (fastlane) y actualizaciones automáticas por tag. El riesgo principal no es
+técnico: es el proceso de revisión de F-Droid, que depende de un tercero y puede tardar semanas.
+
+La app parte con los deberes hechos: licencia GPL-3.0, repo público, cero dependencias
+propietarias (ni Google Services, ni Firebase, ni analítica), y el keystore fuera del repo.
+F-Droid compila desde el código y firma con su propia clave, así que la firma de release actual
+no interviene.
+
+---
+
+## Dependencia con otras fases
+
+- **Requiere:** la 1.0.0 publicada (hecho el 2026-07-30).
+- **Habilita:** distribución continua — cada tag `vX.Y.Z` futuro se detecta y publica solo.
+
+---
+
+## Tareas
+
+### Metadatos en el repo
+
+| # | Tarea | Estado | Notas |
+|---|-------|--------|-------|
+| 7.1 | Metadatos fastlane en-US: `title`, `short_description`, `full_description`, `changelogs/2.txt` | ✅ Hecho | F-Droid los lee del commit que compila; idioma del producto: inglés |
+| 7.2 | Icono 512×512 (`images/icon.png`) | ✅ Hecho | Rasterizado de `public/favicon.svg` con cairosvg |
+| 7.3 | Capturas (`images/phoneScreenshots/`) | ✅ Hecho | Dos del emulador (`help` y `ls`); sustituibles por capturas del dispositivo real |
+
+### Proceso F-Droid
+
+| # | Tarea | Estado | Notas |
+|---|-------|--------|-------|
+| 7.4 | Tag `v1.0.0` en el commit de main que contenga los metadatos | 🔒 Bloqueado | Espera al merge de la PR de esta fase. El tag `Release` actual apunta a `0d2a0a4`, anterior a la subida de versión: no sirve para F-Droid |
+| 7.5 | Borrador de `metadata/dev.tty.yml` para fdroiddata | ✅ Hecho | En `docs/fdroid/dev.tty.yml`; procedimiento completo en `docs/fdroid/README.md` |
+| 7.6 | MR a `gitlab.com/fdroid/fdroiddata` (o issue en `fdroid/rfp`) | 🔒 Bloqueado | La hace el usuario con su cuenta de GitLab; espera a 7.4 |
+| 7.7 | Revisión de F-Droid y primera publicación | 🔒 Bloqueado | Espera a 7.6; el CI del MR compila la app en su buildserver |
+
+---
+
+## Entregable
+
+`tty` instalable desde el cliente de F-Droid, con ficha completa (descripción, icono, changelog)
+y actualizaciones automáticas al publicar tags `vX.Y.Z`.
+
+## Criterio de aceptación
+
+1. El MR a fdroiddata pasa el CI (la app compila en el buildserver de F-Droid sin blobs ni
+   dependencias no libres).
+2. La ficha muestra título, descripción y changelog leídos del repo, no escritos a mano en el MR.
+3. Un tag nuevo `vX.Y.Z` con `versionCode` incrementado se detecta sin tocar fdroiddata
+   (`AutoUpdateMode: Version`).
+
+---
+
+## Registro de avance
+
+| Fecha | Tarea | Notas |
+|-------|-------|-------|
+| 2026-08-04 | Fase creada | Repo auditado: GPL-3.0 ✓, público ✓, sin deps propietarias ✓, keystore fuera del repo ✓. Detectado que el tag `Release` no contiene la 1.0.0 |
+| 2026-08-04 | 7.1, 7.2, 7.3, 7.5 | Fastlane completo (textos, icono 512, dos capturas del emulador), YAML de fdroiddata y procedimiento en `docs/fdroid/`. `./gradlew test` y `assembleDebug` en verde; la app verificada arrancando en el emulador. Pendiente del usuario: merge, tag `v1.0.0` y MR a fdroiddata |
