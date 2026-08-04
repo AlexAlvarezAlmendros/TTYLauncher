@@ -35,9 +35,9 @@ no interviene.
 
 | # | Tarea | Estado | Notas |
 |---|-------|--------|-------|
-| 7.4 | Tag `v1.0.0` en el commit de main que contenga los metadatos | 🔒 Bloqueado | Espera al merge de la PR de esta fase. El tag `Release` actual apunta a `0d2a0a4`, anterior a la subida de versión: no sirve para F-Droid |
+| 7.4 | Tag `v1.0.0` en el commit de main que contenga los metadatos | ✅ Hecho | `v1.0.0` → `3e239ae` (merge de la PR #15), pusheado el 2026-08-04 |
 | 7.5 | Borrador de `metadata/dev.tty.yml` para fdroiddata | ✅ Hecho | En `docs/fdroid/dev.tty.yml`; procedimiento completo en `docs/fdroid/README.md` |
-| 7.6 | MR a `gitlab.com/fdroid/fdroiddata` (o issue en `fdroid/rfp`) | 🔒 Bloqueado | La hace el usuario con su cuenta de GitLab; espera a 7.4 |
+| 7.6 | MR a `gitlab.com/fdroid/fdroiddata` (o issue en `fdroid/rfp`) | 🔄 En curso | Rama `dev.tty` con el commit lista en `~/Documentos/GIT/fdroiddata`; falta autenticar `glab` para fork+push+MR |
 | 7.7 | Revisión de F-Droid y primera publicación | 🔒 Bloqueado | Espera a 7.6; el CI del MR compila la app en su buildserver |
 
 ---
@@ -63,3 +63,4 @@ y actualizaciones automáticas al publicar tags `vX.Y.Z`.
 |-------|-------|-------|
 | 2026-08-04 | Fase creada | Repo auditado: GPL-3.0 ✓, público ✓, sin deps propietarias ✓, keystore fuera del repo ✓. Detectado que el tag `Release` no contiene la 1.0.0 |
 | 2026-08-04 | 7.1, 7.2, 7.3, 7.5 | Fastlane completo (textos, icono 512, dos capturas del emulador), YAML de fdroiddata y procedimiento en `docs/fdroid/`. `./gradlew test` y `assembleDebug` en verde; la app verificada arrancando en el emulador. Pendiente del usuario: merge, tag `v1.0.0` y MR a fdroiddata |
+| 2026-08-04 | 7.4 y avance de 7.6 | PR #15 mergeada, tag `v1.0.0` pusheado. `glab` instalado en `~/.local/bin`, fdroiddata clonado en `~/Documentos/GIT/fdroiddata` con la rama `dev.tty` y el commit «New app: tty». Bloqueo: autenticación de GitLab del usuario |
