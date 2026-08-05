@@ -38,7 +38,9 @@ no interviene.
 | 7.4 | Tag `v1.0.0` en el commit de main que contenga los metadatos | ✅ Hecho | `v1.0.0` → `3e239ae` (merge de la PR #15), pusheado el 2026-08-04 |
 | 7.5 | Borrador de `metadata/dev.tty.yml` para fdroiddata | ✅ Hecho | En `docs/fdroid/dev.tty.yml`; procedimiento completo en `docs/fdroid/README.md` |
 | 7.6 | MR a `gitlab.com/fdroid/fdroiddata` (o issue en `fdroid/rfp`) | ✅ Hecho | [fdroiddata!44814](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/44814), abierto el 2026-08-04 |
-| 7.7 | Revisión de F-Droid y primera publicación | 🔄 En curso | El CI del MR compila la app en su buildserver; vigilar el MR por si piden cambios |
+| 7.7 | Revisión de F-Droid y primera publicación | 🔄 En curso | `fdroid build` pasó a la primera. Corregidos `checkupdates` y `rewritemeta`; CI del fork bloqueado por verificación de cuenta de GitLab |
+| 7.8 | Reproducible builds | ✅ Hecho | Verificado con `apksigcopier`: build sin firmar desde clon limpio en `v1.0.0` + la firma del proyecto reconstruye el APK byte a byte |
+| 7.9 | Republicar el APK de la 1.0.0 | ✅ Hecho | El APK anterior se había compilado del commit `25f9bc6`, no de la 1.0.0. Nueva release en el tag `v1.0.0` |
 
 ---
 
@@ -65,3 +67,5 @@ y actualizaciones automáticas al publicar tags `vX.Y.Z`.
 | 2026-08-04 | 7.1, 7.2, 7.3, 7.5 | Fastlane completo (textos, icono 512, dos capturas del emulador), YAML de fdroiddata y procedimiento en `docs/fdroid/`. `./gradlew test` y `assembleDebug` en verde; la app verificada arrancando en el emulador. Pendiente del usuario: merge, tag `v1.0.0` y MR a fdroiddata |
 | 2026-08-04 | 7.4 y avance de 7.6 | PR #15 mergeada, tag `v1.0.0` pusheado. `glab` instalado en `~/.local/bin`, fdroiddata clonado en `~/Documentos/GIT/fdroiddata` con la rama `dev.tty` y el commit «New app: tty». Bloqueo: autenticación de GitLab del usuario |
 | 2026-08-04 | 7.6 | Fork público en `AlexAlvarezAlmendros1/fdroiddata`, rama pusheada y [MR !44814](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/44814) abierto con la checklist de la plantilla. Sin reproducible builds (firma F-Droid). Queda 7.7: esperar CI y revisión |
+| 2026-08-05 | 7.7 | Primer CI: `fdroid build` **en verde**; fallaron `rewritemeta` (formato) y `checkupdates`. Este último por diseño del repo: las versiones viven solo en `libs.versions.toml` y el parser de fdroidserver no sigue el catálogo → se pasa a `UpdateCheckMode: HTTP` leyendo el TOML, con `AutoUpdateMode: Version v%v` |
+| 2026-08-05 | 7.8, 7.9 | El usuario elige activar reproducible builds. Al verificarlo se descubre que el APK publicado venía del commit `25f9bc6`, no de la 1.0.0 (AGP incrusta el commit en `META-INF/version-control-info.textproto`). Recompilado desde un clon limpio en `v1.0.0`, validado en el emulador y republicado en el tag `v1.0.0`. `apksigcopier compare` en verde |
